@@ -11,6 +11,7 @@ Args:
 """
 
 import argparse
+import sys
 from cairo_plot import CairoPlot
 from matplotlib_plot import MatplotlibPlot
 
@@ -38,8 +39,9 @@ def main() -> None:
     elif args.plot == 'cairo':
         plotter = CairoPlot()
     else:
-        print(f'[Main] Error: Unknown plotter \'{args.plot}\'.')
-        return
+        print(f'[Main] Error: Unknown plotter \'{args.plot}\'. '
+              'Use `matplotlib` or `cairo`.')
+        sys.exit(1)
 
     # Read the transplace file.
     print(f'[Main] Reading file \'{args.transplace_path}\'...')
