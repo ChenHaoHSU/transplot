@@ -13,7 +13,8 @@ class CairoRect:
     """A class to represent a plot object (rectangle) using Cairo."""
 
     def __init__(
-            self, x: int, y: int, w: int, h: int, fill: bool = True,
+            self, x: int, y: int, w: int, h: int,
+            fill: bool = True,
             fill_rgba: Tuple[float, float, float, float] = (1., 1., 1., 1.),
             stroke: bool = False,
             stroke_rgba: Tuple[float, float, float, float] = (0., 0., 0., 1.),
@@ -21,15 +22,15 @@ class CairoRect:
         """Initializes the CairoRect object.
 
         Args:
-            x: x-coordinate of the top-left corner of the rectangle
-            y: y-coordinate of the top-left corner of the rectangle
-            w: Width of the rectangle
-            h: Height of the rectangle
-            fill: Whether to fill the rectangle (default is True)
-            fill_rgba: Fill color of the rectangle (R, G, B, A)
-            stroke: Whether to outline the rectangle (default is False)
-            stroke_rgba: Stroke color of the rectangle (R, G, B, A)
-            linewidth: Width of the stroke line (default is 1)
+            x: x-coordinate of the bottom-left corner of the rectangle.
+            y: y-coordinate of the bottom-left corner of the rectangle.
+            w: Width of the rectangle.
+            h: Height of the rectangle.
+            fill: Whether to fill the rectangle. (default is True)
+            fill_rgba: Fill color of the rectangle. (R, G, B, A)
+            stroke: Whether to outline the rectangle. (default is False)
+            stroke_rgba: Stroke color of the rectangle. (R, G, B, A)
+            linewidth: Width of the stroke line. (default is 1.0)
         """
         super().__init__()
         self.x = x
@@ -49,7 +50,10 @@ class CairoRect:
                f''
 
     def draw(self, context: cairo.Context) -> None:
-        """Draws the rectangle on the given Cairo context with specified RGBA colors.
+        """Draws the rectangle on the given Cairo context.
+
+        This method draws the rectangle on the given Cairo context with the
+        specified fill and stroke properties.
 
         Args:
             context: A Cairo context to draw the rectangle on.
@@ -169,8 +173,9 @@ class CairoPlot(BasePlot):
                 fill_rgb = self._convert_int_to_float_rgb((8, 8, 8))
                 fill_alpha = self.params['transistor_alpha_inv'][tran_type]
             else:
+                assert transistor['sdc'] in self.color_map
                 fill_rgb = self._convert_int_to_float_rgb(
-                    self.colors[transistor['sdc'] % len(self.colors)])
+                    self.color_map[transistor['sdc']])
                 fill_alpha = self.params['transistor_alpha'][tran_type]
             fill_rgba = fill_rgb + (fill_alpha,)
 

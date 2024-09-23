@@ -19,20 +19,20 @@ class MatplotlibRect:
                  fill_rgb: Tuple[float, float, float] = (1., 1., 1.),
                  edge: bool = False,
                  edge_rgb: Tuple[float, float, float] = (0., 0., 0.),
-                 linewidth: int = 1):
+                 linewidth: float = 1.0):
         """Initializes the MatplotlibRect object.
 
         Args:
-            x: x-coordinate of the top-left corner of the rectangle
-            y: y-coordinate of the top-left corner of the rectangle
-            w: Width of the rectangle
-            h: Height of the rectangle
-            alpha: Alpha value (transparency) of the rectangle (default is 1.0)
-            fill: Whether to fill the rectangle (default is True)
-            fill_rgba: Fill color of the rectangle (R, G, B)
-            edge: Whether to outline the rectangle (default is False)
-            edge_rgba: Outline color of the rectangle (R, G, B)
-            linewidth: Width of the outline (default is 1)
+            x: x-coordinate of the bottom-left corner of the rectangle.
+            y: y-coordinate of the bottom-left corner of the rectangle.
+            w: Width of the rectangle.
+            h: Height of the rectangle.
+            alpha: Alpha value (transparency) of the rectangle. (default is 1.0)
+            fill: Whether to fill the rectangle. (default is True)
+            fill_rgba: Fill color of the rectangle. (R, G, B)
+            edge: Whether to outline the rectangle. (default is False)
+            edge_rgba: Outline color of the rectangle. (R, G, B)
+            linewidth: Width of the outline. (default is 1.0)
         """
         super().__init__()
         self.x = x
@@ -66,7 +66,8 @@ class MatplotlibRect:
         edgecolor = self.edge_rgb if self.edge else None
         rect = Rectangle((self.x, self.y), self.w, self.h,
                          alpha=self.alpha, fill=fill,
-                         facecolor=facecolor, edgecolor=edgecolor)
+                         facecolor=facecolor, edgecolor=edgecolor,
+                         linewidth=self.linewidth)
         ax.add_patch(rect)
 
 
@@ -99,7 +100,7 @@ class MatplotlibPlot(BasePlot):
             # RGB color of transistor edges.
             'transistor_edge_rgb': (0, 0, 0),
             # Width of transistor edges.
-            'transistor_linewidth': 0.8,
+            'transistor_linewidth': 0.5,
             # Fill alpha of transistors.
             'transistor_alpha': {'NMOS': 0.9, 'PMOS': 0.5},
             # Fill alpha of inverters.
@@ -108,6 +109,10 @@ class MatplotlibPlot(BasePlot):
             'transistor_poly_shrink_ratio': 0.2,
             # Shrink ratio of diffusion.
             'transistor_diffusion_shrink_ratio': 0.5,
+            # Plot margin x.
+            'plot_margin_x': 1000,
+            # Plot margin y.
+            'plot_margin_y': 1000,
         }
 
     def generate_row_rectangles(self) -> List[MatplotlibRect]:
@@ -165,8 +170,9 @@ class MatplotlibPlot(BasePlot):
                     self.params['transistor_fill_rgb_inv'])
                 fill_alpha = self.params['transistor_alpha_inv'][tran_type]
             else:
+                assert transistor['sdc'] in self.color_map
                 fill_rgb = self._convert_int_to_float_rgb(
-                    self.colors[transistor['sdc'] % len(self.colors)])
+                    self.color_map[transistor['sdc']])
                 fill_alpha = self.params['transistor_alpha'][tran_type]
 
             # Edge.
@@ -203,14 +209,21 @@ class MatplotlibPlot(BasePlot):
     def get_plot_boundary(self) -> Tuple[int, int, int, int]:
         """Gets the boundary of the plot.
 
+        This method calculates the boundary of the plot based on the die area
+        and the plot margin.
+
         Returns:
             A tuple of (x_low, y_low, x_high, y_high)
         """
         if not self.data['die_area']:
             return (0, 0, 0, 0)
 
+        plot_margin_x = self.params['plot_margin_x']
+        plot_margin_y = self.params['plot_margin_y']
         die_xl, die_yl, die_xh, die_yh = tuple(self.data['die_area'])
-        return (die_xl, die_yl, die_xh, die_yh)
+
+        return (die_xl - plot_margin_x, die_yl - plot_margin_y,
+                die_xh + plot_margin_x, die_yh + plot_margin_y)
 
     def plot(self, png_name: str = None) -> None:
         """Plots the data to a pop-up window or save to a png file.

@@ -1,6 +1,7 @@
 """Base class for all plot classes."""
 
 from typing import Any, Dict, Tuple, Union
+import random
 
 
 class BasePlot:
@@ -21,7 +22,7 @@ class BasePlot:
             'transistors': [],
             'sdc_group': {},
         }
-        # TODO(ChenHaoHSU): Add more colors.
+        self.color_map = {}
         self.colors = [
             (0, 0, 255),  # Blue
             (255, 0, 0),  # Red
@@ -55,8 +56,9 @@ class BasePlot:
             with open(path, 'r', encoding='utf-8') as file:
                 for line in file.read().splitlines():
                     self._parse_line(line)
+            self._build_color_map()
         except FileNotFoundError:
-            print(f'Error: The file "{path}" was not found.')
+            print(f'[BasePlot] Error: The file "{path}" was not found.')
 
     def _parse_line(self, line: str) -> None:
         """Parses a line from the file."""
@@ -77,10 +79,10 @@ class BasePlot:
                 transistor_info = self._parse_transistor(line)
                 self.data['transistors'].append(transistor_info)
         except ValueError as ve:
-            print(f"Value error when parsing line '{line}': {ve}")
+            print(f"[BasePlot] Value error when parsing line '{line}': {ve}")
         except IndexError as ie:
             print(
-                f"Index error: Possibly missing fields in line '{line}': {ie}")
+                f"[BasePlot] Index error: Possibly missing fields in line '{line}': {ie}")
 
     def _parse_int(self, line: str) -> int:
         """Parses an integer from a line with the format 'KEY VALUE'."""
@@ -106,7 +108,7 @@ class BasePlot:
             'y': int(tokens[3]),
             'flipped': int(tokens[4]),
             'type': tokens[5],
-            'sdc': int(tokens[6])
+            'sdc': tokens[6],
         }
 
         # Update SDC group count.
@@ -128,6 +130,43 @@ class BasePlot:
             A float RGB tuple.
         """
         return tuple(map(lambda x: x / 255., rgb))
+
+    def _generate_colors(self) -> None:
+        """Generates colors for the transistors.
+
+        The predefined colors are in the `colors` attribute. If the number of
+        SDC groups with more than 2 transistors is greater than the number of
+        predefined colors, this method generates additional colors and appends
+        them to the `colors` attribute.
+        """
+        num_colors = len(self.colors)
+        keys = [k for k, v in self.data['sdc_group'].items() if v > 2]
+        num_groups = len(keys)
+        if num_groups > num_colors:
+            for _ in range(num_groups - num_colors):
+                self.colors.append(
+                    (random.randint(0, 255),
+                     random.randint(0, 255),
+                     random.randint(0, 255)))
+
+    def _build_color_map(self) -> None:
+        """Builds the color map for the transistors.
+
+        The color map is a dictionary that maps SDC group names to colors.
+        The color is represented as an RGB tuple.
+        The color map is stored in the `color_map` attribute.
+        """
+        # Generate colors if needed.
+        self._generate_colors()
+
+        # Sort the SDC groups to ensure that the color assignment is consistent.
+        keys = [k for k, v in self.data['sdc_group'].items() if v > 2]
+        sorted_keys = sorted(keys, key=int)
+
+        # Assign colors to SDC groups.
+        self.color_map = {}
+        for i, sdc in enumerate(sorted_keys):
+            self.color_map[sdc] = self.colors[i]
 
     def get_data(self) -> Dict[str, Any]:
         """Gets the data read from the file.
