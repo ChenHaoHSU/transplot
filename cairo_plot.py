@@ -98,6 +98,8 @@ class CairoPlot(BasePlot):
             'row_stroke_rgba': (0, 0, 0, 1),
             # Width of row edges.
             'row_linewidth': 1.0,
+            # Gray color fill.
+            'transistor_fill_rgb_gray': (8, 8, 8),
             # RGB color of transistor edges.
             'transistor_stroke_rgb': (0, 0, 0),
             # Alpha of transistor edges.
@@ -182,21 +184,21 @@ class CairoPlot(BasePlot):
             # Inverter: black. Others: colors from the color map.
             tran_type = transistor['type']
             fill_rgb, fill_alpha = (0, 0, 0), 1.0
-            if self.data['sdc_group'][transistor['sdc']] <= 2:
-                fill_rgb = self._convert_int_to_float_rgb((8, 8, 8))
-                fill_alpha = self.params['transistor_alpha_inv'][tran_type]
-            else:
+            if self._is_transistor_to_color_plot(transistor):
                 assert transistor['sdc'] in self.color_map
                 fill_rgb = self._convert_int_to_float_rgb(
                     self.color_map[transistor['sdc']])
                 fill_alpha = self.params['transistor_alpha'][tran_type]
+            else:
+                fill_rgb = self._convert_int_to_float_rgb(
+                    self.params['transistor_fill_rgb_gray'])
+                fill_alpha = self.params['transistor_alpha_inv'][tran_type]
             return fill_rgb + (fill_alpha,)
 
         def generate_one_transistor_rectangles(
                 transistor: Dict[str, Any]) -> List[CairoRect]:
             # Transistor location.
-            tran_x = transistor['x']
-            tran_y = transistor['y']
+            tran_x, tran_y = transistor['x'],  transistor['y']
 
             # Fill.
             fill_rgba = get_fill_rgba(transistor)

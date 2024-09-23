@@ -1,6 +1,6 @@
 """Base class for all plot classes."""
 
-from typing import Any, Dict, Tuple, Union
+from typing import Any, Dict, Tuple, Union, List
 import random
 import sys
 
@@ -159,12 +159,15 @@ class BasePlot:
         num_colors = len(self.colors)
         keys = [k for k, v in self.data['sdc_group'].items() if v > 2]
         num_groups = len(keys)
+
+        def random_color() -> Tuple[int, int, int]:
+            return (random.randint(0, 255),
+                    random.randint(0, 255),
+                    random.randint(0, 255))
+
         if num_groups > num_colors:
             for _ in range(num_groups - num_colors):
-                self.colors.append(
-                    (random.randint(0, 255),
-                     random.randint(0, 255),
-                     random.randint(0, 255)))
+                self.colors.append(random_color())
 
     def _build_color_map(self) -> None:
         """Builds the color map for the transistors.
@@ -184,6 +187,30 @@ class BasePlot:
         self.color_map = {}
         for i, sdc in enumerate(sorted_keys):
             self.color_map[sdc] = self.colors[i]
+
+    def set_target_sdc(self, sdc: List[str]) -> None:
+        """Sets the target SDC.
+
+        Args:
+            sdc: The target SDC.
+        """
+        self.target_sdc = set(sdc)
+
+    def _is_transistor_to_color_plot(
+            self, transistor: Dict[str, Union[int, str]]) -> bool:
+        """Checks if a transistor should be plotted in color.
+
+        Args:
+            transistor: The transistor to check.
+
+        Returns:
+            True if the transistor should be plotted, False otherwise.
+        """
+        if self.data['sdc_group'][transistor['sdc']] <= 2:
+            return False
+        if self.target_sdc:
+            return transistor['sdc'] in self.target_sdc
+        return True
 
     def get_data(self) -> Dict[str, Any]:
         """Gets the data read from the file.

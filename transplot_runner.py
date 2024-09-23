@@ -39,9 +39,10 @@ def main() -> None:
     print(f'[Main] Reading file \'{args.transplace_path}\'...')
     plotter.read(args.transplace_path)
 
-    # # Set the target SDC.
-    # if args.sdc:
-    #     plotter.set_target_sdc(args.sdc)
+    # Set the target SDC.
+    if args.sdc:
+        print(f'[Main] Target SDC: {args.sdc}')
+        plotter.set_target_sdc(args.sdc)
 
     # Plot.
     plotter.plot(args.output)
