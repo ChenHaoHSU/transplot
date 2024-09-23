@@ -29,3 +29,8 @@ python3 transplot_runner.py example/example1.tp -p cairo
 ```
 python3 transplot_runner.py example/example1.tp -p cairo -o example1.png
 ```
+
+  5. Set target SDC.
+```
+python3 transplot_runner.py example/example1.tp -p cairo -o example1.png -s 0 1 2 3
+```

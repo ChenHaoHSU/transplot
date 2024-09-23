@@ -4,6 +4,7 @@ Args:
     transplace_path: The path of the transplace file to read.
     plot: The plotter to use ('matplotlib' or 'cairo').
     output: The name of the png file to save the plot.
+    sdc: The target SDC.
 """
 
 import argparse
