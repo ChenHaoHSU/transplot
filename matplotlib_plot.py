@@ -203,7 +203,6 @@ class MatplotlibPlot(BasePlot):
                 edge=True, edge_rgb=edge_rgb, linewidth=linewidth)
 
             # Poly rectangle.
-
             poly_rect = MatplotlibRect(
                 x=tran_x + poly_x_offset, y=tran_y, w=poly_width, h=tran_height,
                 alpha=fill_alpha, fill=True, fill_rgb=fill_rgb,

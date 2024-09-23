@@ -22,7 +22,7 @@ class BasePlot:
             'transistors': [],
             'sdc_group': {},
         }
-        self.color_map = {}
+        # Predefined colors.
         self.colors = [
             (0, 0, 255),  # Blue
             (255, 0, 0),  # Red
@@ -45,6 +45,8 @@ class BasePlot:
             (210, 180, 140),  # Tan
             (46, 139, 87),  # SeaGreen
         ]
+        # Color map for SDC groups. It will be built when reading the file.
+        self.color_map = {}
 
     def read(self, path: str) -> None:
         """Reads the data from a file.
@@ -108,7 +110,7 @@ class BasePlot:
             'y': int(tokens[3]),
             'flipped': int(tokens[4]),
             'type': tokens[5],
-            'sdc': tokens[6],
+            'sdc': tokens[6],  # Note it is a str
         }
 
         # Update SDC group count.
@@ -119,8 +121,8 @@ class BasePlot:
 
         return t
 
-    def _convert_int_to_float_rgb(self, rgb: Tuple[int, int, int]) -> Tuple[
-            float, float, float]:
+    def _convert_int_to_float_rgb(
+            self, rgb: Tuple[int, int, int]) -> Tuple[float, float, float]:
         """Converts an integer RGB tuple to a float RGB tuple.
 
         Args:
