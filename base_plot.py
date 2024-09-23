@@ -2,6 +2,7 @@
 
 from typing import Any, Dict, Tuple, Union
 import random
+import sys
 
 
 class BasePlot:
@@ -61,6 +62,7 @@ class BasePlot:
             self._build_color_map()
         except FileNotFoundError:
             print(f'[BasePlot] Error: The file "{path}" was not found.')
+            sys.exit(1)
 
     def _parse_line(self, line: str) -> None:
         """Parses a line from the file."""

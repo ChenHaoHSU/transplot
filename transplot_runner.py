@@ -2,8 +2,8 @@
 
 Args:
     transplace_path: The path of the transplace file to read.
-    png: The name of the png file to save the plot.
-    plotter: The plotter to use ('matplotlib' or 'cairo').
+    plot: The plotter to use ('matplotlib' or 'cairo').
+    output: The name of the png file to save the plot.
 """
 
 import argparse
@@ -16,21 +16,21 @@ def main() -> None:
     # Args parser.
     parser = argparse.ArgumentParser()
     parser.add_argument('transplace_path')
-    parser.add_argument('--png', action='store',
-                        default=None, help='png file name')
-    parser.add_argument('--plotter', action='store',
+    parser.add_argument('-o', '--output', action='store',
+                        default=None, help='output png file name')
+    parser.add_argument('-p', '--plot', action='store',
                         default='matplotlib',
-                        help='plotter to use (matplotlib or cairo)')
+                        help='plotter to use (`matplotlib` or `cairo`)')
     args = parser.parse_args()
 
     # Initialize the plotter.
     plotter = None
-    if args.plotter == 'matplotlib':
+    if args.plot == 'matplotlib':
         plotter = MatplotlibPlot()
-    elif args.plotter == 'cairo':
+    elif args.plot == 'cairo':
         plotter = CairoPlot()
     else:
-        print(f'[Main] Error: Unknown plotter \'{args.plotter}\'.')
+        print(f'[Main] Error: Unknown plotter \'{args.plot}\'.')
         return
 
     # Read the transplace file.
@@ -38,7 +38,7 @@ def main() -> None:
     plotter.read(args.transplace_path)
 
     # Plot.
-    plotter.plot(args.png)
+    plotter.plot(args.output)
 
 
 if __name__ == '__main__':
