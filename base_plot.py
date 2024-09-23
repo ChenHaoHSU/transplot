@@ -57,8 +57,11 @@ class BasePlot:
         # Color map for SDC groups. It will be built when reading the file.
         self.color_map = {}
 
-        # Target SDC.
+        # Target SDCs.
         self.target_sdc = None
+
+        # Target transistors.
+        self.target_transistors = None
 
     def read(self, path: str) -> None:
         """Reads the data from a file.
@@ -196,6 +199,14 @@ class BasePlot:
         """
         self.target_sdc = set(sdc)
 
+    def set_target_transistors(self, transistors: List[str]) -> None:
+        """Sets the target transistors.
+
+        Args:
+            transistors: The target transistors.
+        """
+        self.target_transistors = set(transistors)
+
     def _is_transistor_to_color_plot(
             self, transistor: Dict[str, Union[int, str]]) -> bool:
         """Checks if a transistor should be plotted in color.
@@ -210,6 +221,9 @@ class BasePlot:
             return False
         if self.target_sdc:
             return transistor['sdc'] in self.target_sdc
+        if self.target_transistors:
+            return transistor['name'] in self.target_transistors
+
         return True
 
     def get_data(self) -> Dict[str, Any]:
