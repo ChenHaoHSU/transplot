@@ -45,9 +45,9 @@ class CairoRect:
 
     def __repr__(self):
         return f'CairoRect(x={self.x}, y={self.y}, w={self.w}, ' \
-               f'h={self.h}, fill={self.fill}, fill_rgba={self.fill_rgba}, ' \
-               f'stroke={self.stroke}, stroke_rgba={self.stroke_rgba}, ' \
-               f''
+            f'h={self.h}, fill={self.fill}, fill_rgba={self.fill_rgba}, ' \
+            f'stroke={self.stroke}, stroke_rgba={self.stroke_rgba}, ' \
+            f'linewidth={self.linewidth})'
 
     def draw(self, context: cairo.Context) -> None:
         """Draws the rectangle on the given Cairo context.
@@ -88,11 +88,12 @@ class CairoPlot(BasePlot):
         plotter.plot('example.png')
     """
 
+    # Default name of the png file to save the plot.
+    DEFAULT_PNG_NAME = 'cairo_plot.png'
+
     def __init__(self):
         super().__init__()
         self.params: Dict[str, Any] = {
-            # Scale factor for the plot.
-            'scale': 50,
             # RGB color of row edges.
             'row_stroke_rgba': (0, 0, 0, 1),
             # Width of row edges.
@@ -106,7 +107,7 @@ class CairoPlot(BasePlot):
             # Alpha of transistor edges.
             'transistor_stroke_alpha': 1.0,
             # Width of transistor edges.
-            'transistor_linewidth': 0.8,
+            'transistor_linewidth': 1.0,
             # Fill alpha of transistors.
             'transistor_alpha': {'NMOS': 0.9, 'PMOS': 0.5},
             # Fill alpha of inverters.
@@ -115,9 +116,13 @@ class CairoPlot(BasePlot):
             'transistor_poly_shrink_ratio': 0.2,
             # Shrink ratio of diffusion.
             'transistor_diffusion_shrink_ratio': 0.5,
+            # Plot margin x.
+            'plot_margin_x': 2000,
+            # Plot margin y.
+            'plot_margin_y': 2000,
         }
 
-    def generate_row_rectangles(self) -> List[CairoRect]:
+    def _generate_row_rectangles(self) -> List[CairoRect]:
         """Generates plot rectangles for rows.
 
         Returns:
@@ -128,14 +133,12 @@ class CairoPlot(BasePlot):
 
         die_xl, die_yl, die_xh, _ = tuple(self.data['die_area'])
 
-        scale = self.params['scale']
+        row_start_x = die_xl
+        row_start_y = die_yl
+        row_width = die_xh - die_xl
+        row_height = self.data['row_height']
 
-        row_start_x = die_xl / scale
-        row_start_y = die_yl / scale
-        row_width = (die_xh - die_xl) / scale
-        row_height = self.data['row_height'] / scale
-
-        def gen_rect(i: int) -> CairoRect:
+        def _generate_one_row_rectangle(i: int) -> CairoRect:
             return CairoRect(x=row_start_x, y=row_start_y + i * row_height,
                              w=row_width, h=row_height,
                              fill=False,
@@ -145,28 +148,38 @@ class CairoPlot(BasePlot):
 
         rectangles = []
         for i in range(self.data['num_rows']):
-            rectangles.append(gen_rect(i))
+            rectangles.append(_generate_one_row_rectangle(i))
 
         return rectangles
 
-    def generate_transistor_rectangles(self) -> List[CairoRect]:
+    def _generate_transistor_rectangles(self) -> List[CairoRect]:
         """Generates plot rectangles for transistors.
 
         Returns:
             A list of CairoRect objects representing transistors.
         """
-        scale = self.params['scale']
-        tran_width = self.params['transistor_width'] / scale
-        tran_height = self.params['transistor_height'] / scale
+        # Transistor size.
+        tran_width = self.params['transistor_width']
+        tran_height = self.params['transistor_height']
 
-        def gen_rect(
-                transistor: Dict[str, Any]) -> List[CairoRect]:
-            # Transistor location (scaled).
-            tran_x = transistor['x'] / scale
-            tran_y = transistor['y'] / scale
+        # Stroke.
+        stroke_rgb = self._convert_int_to_float_rgb(
+            self.params['transistor_stroke_rgb'])
+        stroke_rgba = stroke_rgb + (self.params['transistor_stroke_alpha'],)
+        linewidth = self.params['transistor_linewidth']
 
-            # Fill.
-            # Inverter: black. Others: random color.
+        diff_shrink_ratio = self.params['transistor_diffusion_shrink_ratio']
+        diff_y_offset = tran_height * (1 - diff_shrink_ratio) / 2
+        diff_height = tran_height * diff_shrink_ratio
+
+        poly_shrink_ratio = self.params['transistor_poly_shrink_ratio']
+        poly_x_offset = tran_width * (1 - poly_shrink_ratio) / 2
+        poly_width = tran_width * poly_shrink_ratio
+
+        def get_fill_rgba(
+                transistor: Dict[str, Any]
+        ) -> Tuple[float, float, float, float]:
+            # Inverter: black. Others: colors from the color map.
             tran_type = transistor['type']
             fill_rgb, fill_alpha = (0, 0, 0), 1.0
             if self.data['sdc_group'][transistor['sdc']] <= 2:
@@ -177,74 +190,136 @@ class CairoPlot(BasePlot):
                 fill_rgb = self._convert_int_to_float_rgb(
                     self.color_map[transistor['sdc']])
                 fill_alpha = self.params['transistor_alpha'][tran_type]
-            fill_rgba = fill_rgb + (fill_alpha,)
+            return fill_rgb + (fill_alpha,)
 
-            # Stroke.
-            stroke_rgb = self._convert_int_to_float_rgb(
-                self.params['transistor_stroke_rgb'])
-            stroke_rgba = stroke_rgb + (self.params['transistor_stroke_alpha'],)
-            linewidth = self.params['transistor_linewidth']
+        def generate_one_transistor_rectangles(
+                transistor: Dict[str, Any]) -> List[CairoRect]:
+            # Transistor location.
+            tran_x = transistor['x']
+            tran_y = transistor['y']
+
+            # Fill.
+            fill_rgba = get_fill_rgba(transistor)
 
             # Diffusion rectangle.
-            diff_shrink_ratio = self.params['transistor_diffusion_shrink_ratio']
-            diff_y = tran_y + (tran_height * (1 - diff_shrink_ratio) / 2)
-            diff_height = tran_height * diff_shrink_ratio
             diffusion_rect = CairoRect(
-                x=tran_x, y=diff_y, w=tran_width, h=diff_height, fill=True,
-                fill_rgba=fill_rgba, stroke=True, stroke_rgba=stroke_rgba,
-                linewidth=linewidth)
+                x=tran_x, y=tran_y + diff_y_offset, w=tran_width, h=diff_height,
+                fill=True, fill_rgba=fill_rgba, stroke=True,
+                stroke_rgba=stroke_rgba, linewidth=linewidth)
 
             # Poly rectangle.
-            poly_shrink_ratio = self.params['transistor_poly_shrink_ratio']
-            poly_x = tran_x + (tran_width * (1 - poly_shrink_ratio) / 2)
-            poly_width = tran_width * poly_shrink_ratio
             poly_rect = CairoRect(
-                x=poly_x, y=tran_y, w=poly_width, h=tran_height, fill=True,
-                fill_rgba=fill_rgba, stroke=True, stroke_rgba=stroke_rgba,
-                linewidth=linewidth)
+                x=tran_x + poly_x_offset, y=tran_y, w=poly_width, h=tran_height,
+                fill=True, fill_rgba=fill_rgba, stroke=True,
+                stroke_rgba=stroke_rgba, linewidth=linewidth)
 
             return [diffusion_rect, poly_rect]
 
         rectangles = []
         for transistor in self.data['transistors']:
-            rectangles.extend(gen_rect(transistor))
+            rectangles.extend(generate_one_transistor_rectangles(transistor))
 
         return rectangles
+
+    def _get_die_area(self) -> Tuple[int, int, int, int]:
+        """Gets the die area.
+
+        Returns:
+            A tuple of (x_low, y_low, x_high, y_high)
+        """
+        if not self.data['die_area']:
+            return (0, 0, 0, 0)
+        return tuple(self.data['die_area'])
+
+    def _get_plot_boundary(self) -> Tuple[int, int, int, int]:
+        """Gets the boundary of the plot.
+
+        This method calculates the boundary of the plot based on the die area
+        and the plot margin.
+
+        Returns:
+            A tuple of (x_low, y_low, x_high, y_high)
+        """
+        if not self.data['die_area']:
+            return (0, 0, 0, 0)
+
+        plot_margin_x = self.params['plot_margin_x']
+        plot_margin_y = self.params['plot_margin_y']
+        die_xl, die_yl, die_xh, die_yh = tuple(self.data['die_area'])
+
+        return (die_xl - plot_margin_x, die_yl - plot_margin_y,
+                die_xh + plot_margin_x, die_yh + plot_margin_y)
+
+    def _adjust_linewidth(self, scale_factor: float) -> None:
+        """Adjusts the linewidth based on the scale factor.
+
+        Args:
+            scale_factor: The scale factor used to adjust the linewidth.
+        """
+        self.params['row_linewidth'] /= scale_factor
+        self.params['transistor_linewidth'] /= scale_factor
 
     def plot(self, png_name: str = None) -> None:
         """Plots the data to a pop-up window or save to a png file.
 
         This method uses the Cairo graphics library to plot the data read from
         the transplace file. The plot can be saved to a png file if a file name
-        is provided. Otherwise, a default file name 'cairo_plot.png' is used.
+        is provided. Otherwise, a default file name `CairoPlot.DEFAULT_PNG_NAME`
+        is used.
 
         Args:
             png_name: Name of the png file to save the plot. If None, a default
-              name 'cairo_plot.png' is used.
+              name `CairoPlot.DEFAULT_PNG_NAME` is used.
         """
         print('[CairoPlot] Plotting data using Cairo')
 
-        # Generate rectangles for rows.
-        print('[CairoPlot] Generating row rectangles...')
-        row_rectangles = self.generate_row_rectangles()
-
-        # Generate rectangles for transistors.
-        print('[CairoPlot] Generating transistor rectangles...')
-        transistor_rectangles = self.generate_transistor_rectangles()
-
         # Create a plot.
         print('[CairoPlot] Creating plot...')
-        width, height = 1000, 1000
-        surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
+        surface_width, surface_height = 2000, 2000
+        surface = cairo.ImageSurface(
+            cairo.FORMAT_ARGB32, surface_width, surface_height)
         context = cairo.Context(surface)
 
         # Set the background color (optional, to fill the canvas)
         context.set_source_rgb(1, 1, 1)  # White background
         context.paint()
 
-        # Flip the y-axis (scale by -1 and move origin) to match the plot.
-        context.translate(0, height)  # Move origin to bottom-left corner
-        context.scale(1, -1)  # Flip y-axis
+        # Move origin to bottom-left corner and flip the y-axis (scale by -1)
+        context.translate(0, surface_height)
+        context.scale(1, -1)
+
+        die_xl, die_yl, die_xh, die_yh = self._get_die_area()
+        die_width, die_height = die_xh - die_xl, die_yh - die_yl
+
+        x_low, y_low, x_high, y_high = self._get_plot_boundary()
+        actual_width, actual_height = x_high - x_low, y_high - y_low
+
+        # Set the scale and translate the origin.
+        scale_x = surface_width / actual_width
+        scale_y = surface_height / actual_height
+        scale_factor = min(scale_x, scale_y)
+        context.scale(scale_factor, scale_factor)
+
+        # Shift to the center of the surface. Use the actual width and height.
+        context.translate((surface_width / scale_factor - die_width) / 2,
+                          (surface_height / scale_factor - die_height) / 2)
+
+        # Adjust the linewidth based on the scale factor. Because the linewidth
+        # will be scaled down by the same factor as the coordinates, we need to
+        # scale it back up to maintain the same visual appearance.
+        self._adjust_linewidth(scale_factor)
+
+        # Note(ChenHaoHSU): The order is important.
+        # Adjust (self._adjust_linewidth) the linewidth first, then generate the
+        # objects. Otherwise, the linewidth will not be scaled correctly.
+
+        # Generate rectangles for rows.
+        print('[CairoPlot] Generating row rectangles...')
+        row_rectangles = self._generate_row_rectangles()
+
+        # Generate rectangles for transistors.
+        print('[CairoPlot] Generating transistor rectangles...')
+        transistor_rectangles = self._generate_transistor_rectangles()
 
         # Draw the objects.
         for obj in row_rectangles:
@@ -252,10 +327,12 @@ class CairoPlot(BasePlot):
         for obj in transistor_rectangles:
             obj.draw(context)
 
-        # Save the image to a png file
+        # Make sure the png_name is not None.
         if png_name is None:
-            png_name = 'cairo_plot.png'
+            png_name = CairoPlot.DEFAULT_PNG_NAME
             print(f'[CairoPlot] No PNG file name specified. '
                   f'Saving to \'{png_name}\'...')
+
+        # Save the image to a png file
         surface.write_to_png(png_name)
         print(f'[CairoPlot] Image saved to \'{png_name}\'.')

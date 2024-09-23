@@ -90,7 +90,7 @@ class MatplotlibPlot(BasePlot):
             # RGB color of row edges.
             'row_edge_rgb': (0, 0, 0),
             # Width of row edges.
-            'row_linewidth': 1.0,
+            'row_linewidth': 0.5,
             # Width of transistors.
             'transistor_width': 1728,
             # Height of transistors.
@@ -100,7 +100,7 @@ class MatplotlibPlot(BasePlot):
             # RGB color of transistor edges.
             'transistor_edge_rgb': (0, 0, 0),
             # Width of transistor edges.
-            'transistor_linewidth': 0.5,
+            'transistor_linewidth': 0.3,
             # Fill alpha of transistors.
             'transistor_alpha': {'NMOS': 0.9, 'PMOS': 0.5},
             # Fill alpha of inverters.
@@ -110,12 +110,12 @@ class MatplotlibPlot(BasePlot):
             # Shrink ratio of diffusion.
             'transistor_diffusion_shrink_ratio': 0.5,
             # Plot margin x.
-            'plot_margin_x': 1000,
+            'plot_margin_x': 2000,
             # Plot margin y.
-            'plot_margin_y': 1000,
+            'plot_margin_y': 2000,
         }
 
-    def generate_row_rectangles(self) -> List[MatplotlibRect]:
+    def _generate_row_rectangles(self) -> List[MatplotlibRect]:
         """Generates plot rectangles for rows.
 
         @return: A list of MatplotlibRect objects representing rows.
@@ -146,23 +146,33 @@ class MatplotlibPlot(BasePlot):
 
         return rectangles
 
-    def generate_transistor_rectangles(self) -> List[MatplotlibRect]:
+    def _generate_transistor_rectangles(self) -> List[MatplotlibRect]:
         """Generates plot rectangles for transistors.
 
         Returns:
             A list of MatplotlibRect objects representing transistors.
         """
+        # Trasistor size.
         tran_width = self.params['transistor_width']
         tran_height = self.params['transistor_height']
 
-        def gen_rect(
-                transistor: Dict[str, Any]) -> List[MatplotlibRect]:
-            # Transistor location (scaled).
-            tran_x = transistor['x']
-            tran_y = transistor['y']
+        # Edge.
+        edge_rgb = self._convert_int_to_float_rgb(
+            self.params['transistor_edge_rgb'])
+        linewidth = self.params['transistor_linewidth']
 
-            # Fill.
-            # Inverter: black. Others: random color.
+        diff_shrink_ratio = self.params['transistor_diffusion_shrink_ratio']
+        diff_y_offset = tran_height * (1 - diff_shrink_ratio) / 2
+        diff_height = tran_height * diff_shrink_ratio
+
+        poly_shrink_ratio = self.params['transistor_poly_shrink_ratio']
+        poly_x_offset = tran_width * (1 - poly_shrink_ratio) / 2
+        poly_width = tran_width * poly_shrink_ratio
+
+        def get_fill_rgba(
+                transistor: Dict[str, Any]
+        ) -> Tuple[Tuple[float, float, float], float]:
+            # Inverter: black. Others: colors from the color map.
             tran_type = transistor['type']
             fill_rgb, fill_alpha = (0, 0, 0), 1.0
             if self.data['sdc_group'][transistor['sdc']] <= 2:
@@ -174,27 +184,28 @@ class MatplotlibPlot(BasePlot):
                 fill_rgb = self._convert_int_to_float_rgb(
                     self.color_map[transistor['sdc']])
                 fill_alpha = self.params['transistor_alpha'][tran_type]
+            return fill_rgb, fill_alpha
 
-            # Edge.
-            edge_rgb = self._convert_int_to_float_rgb(
-                self.params['transistor_edge_rgb'])
-            linewidth = self.params['transistor_linewidth']
+        def gen_rect(
+                transistor: Dict[str, Any]) -> List[MatplotlibRect]:
+            # Transistor location.
+            tran_x = transistor['x']
+            tran_y = transistor['y']
+
+            # Fill.
+            # Inverter: black. Others: random color.
+            fill_rgb, fill_alpha = get_fill_rgba(transistor)
 
             # Diffusion rectangle.
-            diff_shrink_ratio = self.params['transistor_diffusion_shrink_ratio']
-            diff_y = tran_y + (tran_height * (1 - diff_shrink_ratio) / 2)
-            diff_height = tran_height * diff_shrink_ratio
             diffusion_rect = MatplotlibRect(
-                x=tran_x, y=diff_y, w=tran_width, h=diff_height,
+                x=tran_x, y=tran_y + diff_y_offset, w=tran_width, h=diff_height,
                 alpha=fill_alpha, fill=True, fill_rgb=fill_rgb,
                 edge=True, edge_rgb=edge_rgb, linewidth=linewidth)
 
             # Poly rectangle.
-            poly_shrink_ratio = self.params['transistor_poly_shrink_ratio']
-            poly_x = tran_x + (tran_width * (1 - poly_shrink_ratio) / 2)
-            poly_width = tran_width * poly_shrink_ratio
+
             poly_rect = MatplotlibRect(
-                x=poly_x, y=tran_y, w=poly_width, h=tran_height,
+                x=tran_x + poly_x_offset, y=tran_y, w=poly_width, h=tran_height,
                 alpha=fill_alpha, fill=True, fill_rgb=fill_rgb,
                 edge=True, edge_rgb=edge_rgb, linewidth=linewidth)
 
@@ -206,7 +217,7 @@ class MatplotlibPlot(BasePlot):
 
         return rectangles
 
-    def get_plot_boundary(self) -> Tuple[int, int, int, int]:
+    def _get_plot_boundary(self) -> Tuple[int, int, int, int]:
         """Gets the boundary of the plot.
 
         This method calculates the boundary of the plot based on the die area
@@ -240,11 +251,11 @@ class MatplotlibPlot(BasePlot):
 
         # Generate rectangles for rows.
         print('[MatplotlibPlot] Generating row rectangles...')
-        row_rectangles = self.generate_row_rectangles()
+        row_rectangles = self._generate_row_rectangles()
 
         # Generate rectangles for transistors.
         print('[MatplotlibPlot] Generating transistor rectangles...')
-        transistor_rectangles = self.generate_transistor_rectangles()
+        transistor_rectangles = self._generate_transistor_rectangles()
 
         # Create a plot.
         print('[MatplotlibPlot] Creating plot... (This may take a few seconds)')
@@ -257,7 +268,7 @@ class MatplotlibPlot(BasePlot):
             obj.draw(ax)
 
         # Set the plot limits.
-        plot_xl, plot_yl, plot_xh, plot_yh = self.get_plot_boundary()
+        plot_xl, plot_yl, plot_xh, plot_yh = self._get_plot_boundary()
         plt.xlim([plot_xl, plot_xh])
         plt.ylim([plot_yl, plot_yh])
 
