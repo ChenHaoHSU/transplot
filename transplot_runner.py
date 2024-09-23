@@ -21,6 +21,8 @@ def main() -> None:
     parser.add_argument('-p', '--plot', action='store',
                         default='matplotlib',
                         help='plotter to use (`matplotlib` or `cairo`)')
+    parser.add_argument('-s', '--sdc', action='store',
+                        nargs="*", default=None, help='target SDC')
     args = parser.parse_args()
 
     # Initialize the plotter.
@@ -36,6 +38,10 @@ def main() -> None:
     # Read the transplace file.
     print(f'[Main] Reading file \'{args.transplace_path}\'...')
     plotter.read(args.transplace_path)
+
+    # # Set the target SDC.
+    # if args.sdc:
+    #     plotter.set_target_sdc(args.sdc)
 
     # Plot.
     plotter.plot(args.output)

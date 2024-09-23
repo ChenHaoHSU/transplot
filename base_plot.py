@@ -57,6 +57,9 @@ class BasePlot:
         # Color map for SDC groups. It will be built when reading the file.
         self.color_map = {}
 
+        # Target SDC.
+        self.target_sdc = None
+
     def read(self, path: str) -> None:
         """Reads the data from a file.
 
@@ -91,10 +94,11 @@ class BasePlot:
                 transistor_info = self._parse_transistor(line)
                 self.data['transistors'].append(transistor_info)
         except ValueError as ve:
-            print(f"[BasePlot] Value error when parsing line '{line}': {ve}")
+            print(f'[BasePlot] Value error when parsing line \'{line}\': {ve}')
         except IndexError as ie:
             print(
-                f"[BasePlot] Index error: Possibly missing fields in line '{line}': {ie}")
+                f'[BasePlot] Index error: Possibly missing fields in '
+                f'line \'{line}\': {ie}')
 
     def _parse_int(self, line: str) -> int:
         """Parses an integer from a line with the format 'KEY VALUE'."""
@@ -105,7 +109,8 @@ class BasePlot:
         tokens = tuple(map(int, line.split()[1:]))
         if len(tokens) != 4:
             raise ValueError(
-                f'DIEAREA should have exactly 4 values, but found: {len(tokens)}')
+                f'DIEAREA should have exactly 4 values, '
+                f'but found: {len(tokens)}')
         return tokens
 
     def _parse_transistor(self, line: str) -> Dict[str, Union[int, str]]:
