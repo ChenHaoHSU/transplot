@@ -15,17 +15,17 @@ Run the main script:
 python3 transplot_runner.py example/example1.tp
 ```
 
-  3. Save the output as a PNG file (plotter=matplotlib, png=example1.png):
+  2. Save the output as a PNG file (plotter=matplotlib, png=example1.png):
 ```
 python3 transplot_runner.py example/example1.tp --png example1.png
 ```
 
-  4. Use a specific plotter (e.g., Cairo):
+  3. Use a specific plotter (plotter=cairo, png=None):
 ```
 python3 transplot_runner.py example/example1.tp --plotter cairo
 ```
 
-  5. Combine options:
+  4. Combine options (plotter=cairo, png=example1.png):
 ```
 python3 transplot_runner.py example/example1.tp --plotter cairo --png example1.png
 ```
