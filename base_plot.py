@@ -12,7 +12,34 @@ class BasePlot:
     provides a common data structure to store the data read from the input file.
     """
 
+    PREDEFINED_COLORS = [
+        (0, 0, 255),  # Blue
+        (255, 0, 0),  # Red
+        (0, 128, 0),  # Green
+        (165, 42, 42),  # Brown
+        (238, 130, 238),  # Violet
+        (255, 255, 0),  # Yellow
+        (0, 0, 0),  # Black
+        (128, 128, 0),  # Olive
+        (255, 255, 240),  # Ivory
+        (255, 165, 0),  # Orange
+        (255, 192, 203),    # Pink
+        (0, 255, 255),  # Aqua
+        (210, 105, 30),  # Chocolate
+        (30, 144, 255),  # DodgerBlue
+        (0, 255, 0),   # Lime
+        (100, 149, 237),  # CornflowerBlue
+        (75, 0, 130),  # Indigo
+        (128, 0, 128),  # Purple
+        (210, 180, 140),  # Tan
+        (46, 139, 87),  # SeaGreen
+    ]
+
     def __init__(self):
+        # Random seed.
+        random.seed(0)
+
+        # Data read from the transplace file.
         self.data: Dict[str, Any] = {
             'units': None,
             'die_area': None,
@@ -23,29 +50,10 @@ class BasePlot:
             'transistors': [],
             'sdc_group': {},
         }
+
         # Predefined colors.
-        self.colors = [
-            (0, 0, 255),  # Blue
-            (255, 0, 0),  # Red
-            (0, 128, 0),  # Green
-            (165, 42, 42),  # Brown
-            (238, 130, 238),  # Violet
-            (255, 255, 0),  # Yellow
-            (0, 0, 0),  # Black
-            (128, 128, 0),  # Olive
-            (255, 255, 240),  # Ivory
-            (255, 165, 0),  # Orange
-            (255, 192, 203),    # Pink
-            (0, 255, 255),  # Aqua
-            (210, 105, 30),  # Chocolate
-            (30, 144, 255),  # DodgerBlue
-            (0, 255, 0),   # Lime
-            (100, 149, 237),  # CornflowerBlue
-            (75, 0, 130),  # Indigo
-            (128, 0, 128),  # Purple
-            (210, 180, 140),  # Tan
-            (46, 139, 87),  # SeaGreen
-        ]
+        self.colors = self.PREDEFINED_COLORS
+
         # Color map for SDC groups. It will be built when reading the file.
         self.color_map = {}
 
