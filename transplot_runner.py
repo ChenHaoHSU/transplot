@@ -1,8 +1,7 @@
 """Transplot runner module.
 
 Args:
-    filename: The name of the transplace file to read.
-    focus_id: The std cell IDs to be colored.
+    transplace_path: The path of the transplace file to read.
     png: The name of the png file to save the plot.
     plotter: The plotter to use ('matplotlib' or 'cairo').
 """
@@ -16,13 +15,7 @@ def main() -> None:
     """Main function of transplot."""
     # Args parser.
     parser = argparse.ArgumentParser()
-    parser.add_argument('filename')
-    parser.add_argument(
-        'focus_id',
-        metavar='focus_id',
-        nargs='*',
-        help='specify std cell IDs to be colored',
-    )
+    parser.add_argument('transplace_path')
     parser.add_argument('--png', action='store',
                         default=None, help='png file name')
     parser.add_argument('--plotter', action='store',
@@ -41,8 +34,8 @@ def main() -> None:
         return
 
     # Read the transplace file.
-    print(f'[Main] Reading file \'{args.filename}\'...')
-    plotter.read(args.filename)
+    print(f'[Main] Reading file \'{args.transplace_path}\'...')
+    plotter.read(args.transplace_path)
 
     # Plot.
     plotter.plot(args.png)

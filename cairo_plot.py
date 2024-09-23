@@ -138,7 +138,7 @@ class CairoPlot(BasePlot):
         row_width = die_xh - die_xl
         row_height = self.data['row_height']
 
-        def _generate_one_row_rectangle(i: int) -> CairoRect:
+        def generate_one_row_rectangle(i: int) -> CairoRect:
             return CairoRect(x=row_start_x, y=row_start_y + i * row_height,
                              w=row_width, h=row_height,
                              fill=False,
@@ -148,7 +148,7 @@ class CairoPlot(BasePlot):
 
         rectangles = []
         for i in range(self.data['num_rows']):
-            rectangles.append(_generate_one_row_rectangle(i))
+            rectangles.append(generate_one_row_rectangle(i))
 
         return rectangles
 

@@ -133,7 +133,7 @@ class MatplotlibPlot(BasePlot):
             self.params['row_edge_rgb'])
         row_linewidth = self.params['row_linewidth']
 
-        def gen_rect(i: int) -> MatplotlibRect:
+        def generate_one_row_rectangle(i: int) -> MatplotlibRect:
             return MatplotlibRect(
                 x=row_start_x, y=row_start_y + i * row_height, w=row_width,
                 h=row_height, fill=False, edge=True, edge_rgb=row_edge_rgb,
@@ -142,7 +142,7 @@ class MatplotlibPlot(BasePlot):
         rectangles = []
         for i in range(self.data['num_rows']):
             # i is the row index, and it determines the y-coordinate of the row.
-            rectangles.append(gen_rect(i))
+            rectangles.append(generate_one_row_rectangle(i))
 
         return rectangles
 
@@ -186,7 +186,7 @@ class MatplotlibPlot(BasePlot):
                 fill_alpha = self.params['transistor_alpha'][tran_type]
             return fill_rgb, fill_alpha
 
-        def gen_rect(
+        def generate_one_transistor_rectangles(
                 transistor: Dict[str, Any]) -> List[MatplotlibRect]:
             # Transistor location.
             tran_x = transistor['x']
@@ -213,7 +213,7 @@ class MatplotlibPlot(BasePlot):
 
         rectangles = []
         for transistor in self.data['transistors']:
-            rectangles.extend(gen_rect(transistor))
+            rectangles.extend(generate_one_transistor_rectangles(transistor))
 
         return rectangles
 
