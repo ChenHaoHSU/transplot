@@ -98,10 +98,6 @@ class CairoPlot(BasePlot):
             'row_stroke_rgba': (0, 0, 0, 1),
             # Width of row edges.
             'row_linewidth': 1.0,
-            # Width of transistors.
-            'transistor_width': 1728,
-            # Height of transistors.
-            'transistor_height': 3456,
             # RGB color of transistor edges.
             'transistor_stroke_rgb': (0, 0, 0),
             # Alpha of transistor edges.
@@ -120,6 +116,10 @@ class CairoPlot(BasePlot):
             'plot_margin_x': 2000,
             # Plot margin y.
             'plot_margin_y': 2000,
+            # Width of transistors (unused, use `site_width` instead).
+            # 'transistor_width': 1728,
+            # Height of transistors (unused, use `row_height / 2` instead).
+            # 'transistor_height': 3456,
         }
 
     def _generate_row_rectangles(self) -> List[CairoRect]:
@@ -159,8 +159,8 @@ class CairoPlot(BasePlot):
             A list of CairoRect objects representing transistors.
         """
         # Transistor size.
-        tran_width = self.params['transistor_width']
-        tran_height = self.params['transistor_height']
+        tran_width = self.data['site_width']
+        tran_height = self.data['row_height'] / 2  # Half of the SDC height.
 
         # Stroke.
         stroke_rgb = self._convert_int_to_float_rgb(

@@ -91,10 +91,6 @@ class MatplotlibPlot(BasePlot):
             'row_edge_rgb': (0, 0, 0),
             # Width of row edges.
             'row_linewidth': 0.5,
-            # Width of transistors.
-            'transistor_width': 1728,
-            # Height of transistors.
-            'transistor_height': 3456,
             # RGB color of inverter fill.
             'transistor_fill_rgb_inv': (8, 8, 8),
             # RGB color of transistor edges.
@@ -113,6 +109,10 @@ class MatplotlibPlot(BasePlot):
             'plot_margin_x': 2000,
             # Plot margin y.
             'plot_margin_y': 2000,
+            # Width of transistors (unused, use `site_width` instead).
+            # 'transistor_width': 1728,
+            # Height of transistors (unused, use `row_height / 2` instead).
+            # 'transistor_height': 3456,
         }
 
     def _generate_row_rectangles(self) -> List[MatplotlibRect]:
@@ -153,8 +153,8 @@ class MatplotlibPlot(BasePlot):
             A list of MatplotlibRect objects representing transistors.
         """
         # Trasistor size.
-        tran_width = self.params['transistor_width']
-        tran_height = self.params['transistor_height']
+        tran_width = self.data['site_width']
+        tran_height = self.data['row_height'] / 2  # Half of the SDC height.
 
         # Edge.
         edge_rgb = self._convert_int_to_float_rgb(
