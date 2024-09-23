@@ -10,22 +10,22 @@ Run the main script:
   ```
 
   ### Example Usage
-  1. Basic usage with default settings (plotter=matplotlib, png=None):
+  1. Basic usage with default settings (plot=matplotlib, output=None):
 ```
 python3 transplot_runner.py example/example1.tp
 ```
 
-  2. Save the output as a PNG file (plotter=matplotlib, png=example1.png):
+  2. Save the output as a PNG file (plot=matplotlib, output=example1.png):
 ```
 python3 transplot_runner.py example/example1.tp -o example1.png
 ```
 
-  3. Use a specific plotter (plotter=cairo, png=None):
+  3. Use a specific plotter (plot=cairo, output=None):
 ```
 python3 transplot_runner.py example/example1.tp -p cairo
 ```
 
-  4. Combine options (plotter=cairo, png=example1.png):
+  4. Combine options (plot=cairo, output=example1.png):
 ```
 python3 transplot_runner.py example/example1.tp -p cairo -o example1.png
 ```
