@@ -2,7 +2,9 @@
 
 from typing import Any, Dict, Tuple, Union, List
 import random
-import sys
+import os
+
+from reader import ReaderV1, ReaderV2
 
 
 class BasePlot:
@@ -40,104 +42,63 @@ class BasePlot:
         random.seed(0)
 
         # Data read from the transplace file.
-        self.data: Dict[str, Any] = {
-            'units': None,
-            'die_area': None,
-            'row_height': None,
-            'site_width': None,
-            'num_rows': None,
-            'num_sites': None,
-            'transistors': [],
-            'sdc_group': {},
-        }
+        self.data: Dict[str, Any] = None
 
         # Predefined colors.
-        self.colors = self.PREDEFINED_COLORS
+        self.colors: List[Tuple[int, int, int]] = self.PREDEFINED_COLORS
 
         # Color map for SDC groups. It will be built when reading the file.
-        self.color_map = {}
+        self.color_map: Dict[str, Tuple[int, int, int]] = None
 
         # Target SDCs.
-        self.target_sdc = None
+        self.target_sdc: List[str] = None
 
         # Target transistors.
-        self.target_transistors = None
+        self.target_transistors: List[str] = None
 
-    def read(self, path: str) -> None:
+    def read(self, path: str) -> bool:
         """Reads the data from a file.
 
         Args:
             path: The file path.
+
+        Returns:
+            True if the file was read successfully, False otherwise.
+
+        Raises:
+            FileNotFoundError: If the file is not found.
         """
-        try:
-            with open(path, 'r', encoding='utf-8') as file:
-                for line in file.read().splitlines():
-                    self._parse_line(line)
+        if not os.path.exists(path):
+            raise FileNotFoundError(
+                f'[BasePlot] Error: The file "{path}" was not found.')
+
+        # Try to read the file with syntax version1.
+        print(f'[BasePlot] Reading file "{path} with syntax version1...')
+        reader_v1 = ReaderV1()
+        if reader_v1.read(path):
+            print(f'[BasePlot] Successfully read the file "{path}" with '
+                  'syntax version1.')
+            self.data = reader_v1.get_data()
             self._build_color_map()
-        except FileNotFoundError:
-            print(f'[BasePlot] Error: The file "{path}" was not found.')
-            sys.exit(1)
+            return True
 
-    def _parse_line(self, line: str) -> None:
-        """Parses a line from the file."""
-        try:
-            if line.startswith('UNITS'):
-                self.data['units'] = self._parse_int(line)
-            elif line.startswith('DIEAREA'):
-                self.data['die_area'] = self._parse_diearea(line)
-            elif line.startswith('ROWHEIGHT'):
-                self.data['row_height'] = self._parse_int(line)
-            elif line.startswith('SITEWIDTH'):
-                self.data['site_width'] = self._parse_int(line)
-            elif line.startswith('ROWS'):
-                self.data['num_rows'] = self._parse_int(line)
-            elif line.startswith('SITES'):
-                self.data['num_sites'] = self._parse_int(line)
-            elif line.startswith('TRANSISTOR'):
-                transistor_info = self._parse_transistor(line)
-                self.data['transistors'].append(transistor_info)
-        except ValueError as ve:
-            print(f'[BasePlot] Value error when parsing line \'{line}\': {ve}')
-        except IndexError as ie:
-            print(
-                f'[BasePlot] Index error: Possibly missing fields in '
-                f'line \'{line}\': {ie}')
+        print(f'[BasePlot] Error: Failed to read the file "{path}" with '
+              'syntax version1.')
 
-    def _parse_int(self, line: str) -> int:
-        """Parses an integer from a line with the format 'KEY VALUE'."""
-        return int(line.split()[1])
+        # Try to read the file with syntax version2.
+        print(f'[BasePlot] Reading file "{path} with syntax version2...')
+        reader_v2 = ReaderV2()
+        if reader_v2.read(path):
+            print(f'[BasePlot] Successfully read the file "{path}" with '
+                  'syntax version2.')
+            self.data = reader_v2.get_data()
+            self._build_color_map()
+            return True
 
-    def _parse_diearea(self, line: str) -> Tuple[int]:
-        """Parses the DIEAREA line."""
-        tokens = tuple(map(int, line.split()[1:]))
-        if len(tokens) != 4:
-            raise ValueError(
-                f'DIEAREA should have exactly 4 values, '
-                f'but found: {len(tokens)}')
-        return tokens
+        print(f'[BasePlot] Error: Failed to read the file "{path}" with '
+              'syntax version2.')
 
-    def _parse_transistor(self, line: str) -> Dict[str, Union[int, str]]:
-        """Parses a TRANSISTOR line."""
-        tokens = line.split()
-        if len(tokens) < 7:
-            raise IndexError(
-                'TRANSISTOR line does not have enough fields.')
-        t = {
-            'name': tokens[1],
-            'x': int(tokens[2]),
-            'y': int(tokens[3]),
-            'flipped': int(tokens[4]),
-            'type': tokens[5],
-            'sdc': tokens[6],  # Note it is a str
-        }
-
-        # Update SDC group count.
-        if t['sdc'] not in self.data['sdc_group']:
-            self.data['sdc_group'][t['sdc']] = 1
-        else:
-            self.data['sdc_group'][t['sdc']] += 1
-
-        return t
+        return False
 
     def _convert_int_to_float_rgb(
             self, rgb: Tuple[int, int, int]) -> Tuple[float, float, float]:
@@ -225,14 +186,6 @@ class BasePlot:
             return transistor['name'] in self.target_transistors
 
         return True
-
-    def get_data(self) -> Dict[str, Any]:
-        """Gets the data read from the file.
-
-        Returns:
-            The data read from the file.
-        """
-        return self.data
 
     def plot(self):
         """Plots the data.

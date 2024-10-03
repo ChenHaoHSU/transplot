@@ -45,7 +45,10 @@ def main() -> None:
 
     # Read the transplace file.
     print(f'[Main] Reading file \'{args.transplace_path}\'...')
-    plotter.read(args.transplace_path)
+    if not plotter.read(args.transplace_path):
+        print('[Main] Error: Failed to read the file '
+              f'\'{args.transplace_path}\'.')
+        sys.exit(1)
 
     # Set the target SDC or transistors.
     if args.sdc:
