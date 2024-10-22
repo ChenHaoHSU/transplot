@@ -282,13 +282,14 @@ class ReaderV2:
     def _parse_pin(self, line: str) -> Dict[str, Union[int, str]]:
         """Parses a PIN line."""
         tokens = line.split()
-        if len(tokens) != 4:
+        if len(tokens) != 5:
             raise IndexError(
-                f'Expect 4 fields but found {len(tokens)} fields.')
+                f'Expect 5 fields but found {len(tokens)} fields.')
         p = {
             'name': tokens[1],
             'x': int(tokens[2]),
             'y': int(tokens[3]),
+            'net_name': tokens[4],
         }
 
         return p
