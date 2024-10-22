@@ -1,8 +1,8 @@
 """Base class for all plot classes."""
 
-from typing import Any, Dict, Tuple, Union, List
-import random
 import os
+import random
+from typing import Any, Dict, Tuple, Union, List
 
 from reader import ReaderV1, ReaderV2
 

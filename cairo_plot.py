@@ -118,6 +118,12 @@ class CairoPlot(BasePlot):
             'plot_margin_x': 2000,
             # Plot margin y.
             'plot_margin_y': 2000,
+            # Pin width.
+            'pin_width': 500,
+            # Pin height.
+            'pin_height': 500,
+            # RGBA color of pins.
+            'pin_fill_rgba': (0, 0, 0, 1.0),
             # Width of transistors (unused, use `site_width` instead).
             # 'transistor_width': 1728,
             # Height of transistors (unused, use `row_height / 2` instead).
@@ -223,6 +229,37 @@ class CairoPlot(BasePlot):
 
         return rectangles
 
+    def _generate_pin_rectangles(self) -> List[CairoRect]:
+        """Generates plot rectangles for pins.
+
+        Returns:
+            A list of CairoRect objects representing pins.
+        """
+        # Pin size.
+        pin_w, pin_h = self.params['pin_width'], self.params['pin_height']
+        pin_hw, pin_hh = pin_w / 2, pin_h / 2
+
+        def generate_one_pin_rectangles(
+                pin: Dict[str, Any]) -> List[CairoRect]:
+            # Pin location.
+            pin_x, pin_y = pin['x'],  pin['y']
+
+            # Fill.
+            fill_rgba = self.params['pin_fill_rgba']
+
+            # Pin rectangle.
+            pin_rect = CairoRect(
+                x=pin_x - pin_hw, y=pin_y - pin_hh,
+                w=pin_w, h=pin_h, fill=True, fill_rgba=fill_rgba)
+
+            return [pin_rect]
+
+        rectangles = []
+        for pin in self.data['pins']:
+            rectangles.extend(generate_one_pin_rectangles(pin))
+
+        return rectangles
+
     def _get_die_area(self) -> Tuple[int, int, int, int]:
         """Gets the die area.
 
@@ -323,10 +360,16 @@ class CairoPlot(BasePlot):
         print('[CairoPlot] Generating transistor rectangles...')
         transistor_rectangles = self._generate_transistor_rectangles()
 
+        # Generate rectangles for pins.
+        print('[CairoPlot] Generating pin rectangles...')
+        pin_rectangles = self._generate_pin_rectangles()
+
         # Draw the objects.
         for obj in row_rectangles:
             obj.draw(context)
         for obj in transistor_rectangles:
+            obj.draw(context)
+        for obj in pin_rectangles:
             obj.draw(context)
 
         # Make sure the png_name is not None.

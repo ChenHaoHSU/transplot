@@ -1,7 +1,7 @@
 """Reader of the transplot file with syntax version1 or version2."""
 
-from typing import Any, Dict, Tuple, Union
 import copy
+from typing import Any, Dict, Tuple, Union
 
 
 class ReaderV1:
@@ -169,6 +169,7 @@ class ReaderV2:
             'num_rows': None,
             'num_sites': None,
             'transistors': [],
+            'pins': [],
             'sdc_group': {},
         }
 
@@ -225,6 +226,9 @@ class ReaderV2:
             elif line.startswith('TRANSISTOR'):
                 transistor_info = self._parse_transistor(line)
                 self.data['transistors'].append(transistor_info)
+            elif line.startswith('PIN'):
+                pin_info = self._parse_pin(line)
+                self.data['pins'].append(pin_info)
             else:
                 raise ValueError(f'Unknown line: \'{line}\'.')
         except ValueError as ve:
@@ -274,3 +278,17 @@ class ReaderV2:
             self.data['sdc_group'][t['sdc']] += 1
 
         return t
+
+    def _parse_pin(self, line: str) -> Dict[str, Union[int, str]]:
+        """Parses a PIN line."""
+        tokens = line.split()
+        if len(tokens) != 4:
+            raise IndexError(
+                f'Expect 4 fields but found {len(tokens)} fields.')
+        p = {
+            'name': tokens[1],
+            'x': int(tokens[2]),
+            'y': int(tokens[3]),
+        }
+
+        return p
