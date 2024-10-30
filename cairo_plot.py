@@ -107,7 +107,7 @@ class CairoPlot(BasePlot):
             # Width of transistor edges.
             'transistor_linewidth': 1.0,
             # Fill alpha of transistors.
-            'transistor_alpha': {'NMOS': 0.9, 'PMOS': 0.5},
+            'transistor_alpha': {'NMOS': 0.5, 'PMOS': 0.9},
             # Fill alpha of inverters.
             'transistor_alpha_inv': {'NMOS': 0.4, 'PMOS': 0.25},
             # Shrink ratio of poly.
