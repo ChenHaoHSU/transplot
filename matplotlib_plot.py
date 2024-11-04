@@ -190,6 +190,8 @@ class MatplotlibPlot(BasePlot):
                 transistor: Dict[str, Any]) -> List[MatplotlibRect]:
             # Transistor location.
             tran_x, tran_y = transistor['x'],  transistor['y']
+            if self.data['transistor_offset']:
+                tran_x += self.data['transistor_offset']
 
             # Fill.
             # Inverter: black. Others: random color.

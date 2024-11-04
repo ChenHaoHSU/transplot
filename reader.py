@@ -23,6 +23,7 @@ class ReaderV1:
             'num_sites': None,
             'transistors': [],
             'sdc_group': {},
+            'transistor_offset': None,
         }
 
         # Parsing transistor flag.
@@ -97,6 +98,8 @@ class ReaderV1:
                 self.data['num_rows'] = self._parse_int(line)
             elif line.startswith('SITES'):
                 self.data['num_sites'] = self._parse_int(line)
+            elif line.startswith('TRANSISTOROFFSET'):
+                self.data['transistor_offset'] = self._parse_int(line)
             elif line.startswith('TRANSISTORS'):
                 self.parsing_transistors_flag = True
                 self.num_transistors = self._parse_int(line)
@@ -171,6 +174,7 @@ class ReaderV2:
             'transistors': [],
             'pins': [],
             'sdc_group': {},
+            'transistor_offset': None,
         }
 
     def get_data(self) -> Dict[str, Any]:
@@ -223,6 +227,8 @@ class ReaderV2:
                 self.data['num_rows'] = self._parse_int(line)
             elif line.startswith('SITES'):
                 self.data['num_sites'] = self._parse_int(line)
+            elif line.startswith('TRANSISTOROFFSET'):
+                self.data['transistor_offset'] = self._parse_int(line)
             elif line.startswith('TRANSISTOR'):
                 transistor_info = self._parse_transistor(line)
                 self.data['transistors'].append(transistor_info)

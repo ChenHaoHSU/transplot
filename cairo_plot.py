@@ -205,6 +205,8 @@ class CairoPlot(BasePlot):
                 transistor: Dict[str, Any]) -> List[CairoRect]:
             # Transistor location.
             tran_x, tran_y = transistor['x'],  transistor['y']
+            if self.data['transistor_offset']:
+                tran_x += self.data['transistor_offset']
 
             # Fill.
             fill_rgba = get_fill_rgba(transistor)
@@ -243,6 +245,8 @@ class CairoPlot(BasePlot):
                 pin: Dict[str, Any]) -> List[CairoRect]:
             # Pin location.
             pin_x, pin_y = pin['x'],  pin['y']
+            if self.data['transistor_offset']:
+                pin_x += self.data['transistor_offset']
 
             # Fill.
             fill_rgba = self.params['pin_fill_rgba']
