@@ -109,6 +109,12 @@ class MatplotlibPlot(BasePlot):
             'plot_margin_x': 2000,
             # Plot margin y.
             'plot_margin_y': 2000,
+            # Pin width.
+            'pin_width': 500,
+            # Pin height.
+            'pin_height': 500,
+            # RGBA color of pins.
+            'pin_fill_rgb': (0, 0, 0),
             # Width of transistors (unused, use `site_width` instead).
             # 'transistor_width': 1728,
             # Height of transistors (unused, use `row_height / 2` instead).
@@ -217,6 +223,39 @@ class MatplotlibPlot(BasePlot):
 
         return rectangles
 
+    def _generate_pin_rectangles(self) -> List[MatplotlibRect]:
+        """Generates plot rectangles for pins.
+
+        Returns:
+            A list of CairoRect objects representing pins.
+        """
+        # Pin size.
+        pin_w, pin_h = self.params['pin_width'], self.params['pin_height']
+        pin_hw, pin_hh = pin_w / 2, pin_h / 2
+
+        def generate_one_pin_rectangles(
+                pin: Dict[str, Any]) -> List[MatplotlibRect]:
+            # Pin location.
+            pin_x, pin_y = pin['x'],  pin['y']
+            if self.data['transistor_offset']:
+                pin_x += self.data['transistor_offset']
+
+            # Fill.
+            fill_rgb = self.params['pin_fill_rgb']
+
+            # Pin rectangle.
+            pin_rect = MatplotlibRect(
+                x=pin_x - pin_hw, y=pin_y - pin_hh,
+                w=pin_w, h=pin_h, fill=True, fill_rgb=fill_rgb)
+
+            return [pin_rect]
+
+        rectangles = []
+        for pin in self.data['pins']:
+            rectangles.extend(generate_one_pin_rectangles(pin))
+
+        return rectangles
+
     def _get_plot_boundary(self) -> Tuple[int, int, int, int]:
         """Gets the boundary of the plot.
 
@@ -257,6 +296,10 @@ class MatplotlibPlot(BasePlot):
         print('[MatplotlibPlot] Generating transistor rectangles...')
         transistor_rectangles = self._generate_transistor_rectangles()
 
+        # Generate rectangles for pins.
+        # print('[MatplotlibPlot] Generating pin rectangles...')
+        pin_rectangles = self._generate_pin_rectangles()
+
         # Create a plot.
         print('[MatplotlibPlot] Creating plot... (This may take a few seconds)')
         _, ax = plt.subplots()
@@ -265,6 +308,8 @@ class MatplotlibPlot(BasePlot):
         for obj in row_rectangles:
             obj.draw(ax)
         for obj in transistor_rectangles:
+            obj.draw(ax)
+        for obj in pin_rectangles:
             obj.draw(ax)
 
         # Set the plot limits.
