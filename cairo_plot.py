@@ -136,7 +136,11 @@ class CairoPlot(BasePlot):
         Returns:
             A list of CairoRect objects representing rows.
         """
-        if not self.data['die_area'] or not self.data['row_height']:
+        if 'num_rows' not in self.data or not self.data['num_rows']:
+            return []
+        if 'die_area' not in self.data or not self.data['die_area']:
+            return []
+        if 'row_height' not in self.data or not self.data['row_height']:
             return []
 
         die_xl, die_yl, die_xh, _ = tuple(self.data['die_area'])
@@ -166,6 +170,16 @@ class CairoPlot(BasePlot):
         Returns:
             A list of CairoRect objects representing transistors.
         """
+        if 'transistors' not in self.data or not self.data['transistors']:
+            print('[MatplotlibPlot] Warning: transistors not found.')
+            return []
+        if 'site_width' not in self.data or not self.data['site_width']:
+            print('[MatplotlibPlot] Warning: site width not found.')
+            return []
+        if 'row_height' not in self.data or not self.data['row_height']:
+            print('[MatplotlibPlot] Warning: row height not found.')
+            return []
+
         # Transistor size.
         tran_width = self.data['site_width']
         tran_height = self.data['row_height'] / 2  # Half of the SDC height.
@@ -237,6 +251,10 @@ class CairoPlot(BasePlot):
         Returns:
             A list of CairoRect objects representing pins.
         """
+        if 'pins' not in self.data or not self.data['pins']:
+            print('[MatplotlibPlot] Warning: pins not found.')
+            return []
+
         # Pin size.
         pin_w, pin_h = self.params['pin_width'], self.params['pin_height']
         pin_hw, pin_hh = pin_w / 2, pin_h / 2
