@@ -180,6 +180,9 @@ class MatplotlibPlot(BasePlot):
             print('[MatplotlibPlot] Warning: row height not found.')
             return []
 
+        # Half site width.
+        half_site_width = self.data["site_width"] // 2
+
         # Trasistor size.
         tran_width = self.data['site_width']
         tran_height = self.data['row_height'] / 2  # Half of the SDC height.
@@ -217,7 +220,7 @@ class MatplotlibPlot(BasePlot):
         def generate_one_transistor_rectangles(
                 transistor: Dict[str, Any]) -> List[MatplotlibRect]:
             # Transistor location.
-            tran_x, tran_y = transistor['x'],  transistor['y']
+            tran_x, tran_y = transistor['x'] - half_site_width, transistor['y']
             if self.data['transistor_offset']:
                 tran_x += self.data['transistor_offset']
 

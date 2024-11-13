@@ -228,8 +228,6 @@ class ReaderV2:
                 self.data['num_rows'] = self._parse_int(line)
             elif line.startswith('SITES'):
                 self.data['num_sites'] = self._parse_int(line)
-            elif line.startswith('TRANSISTOROFFSET'):
-                self.data['transistor_offset'] = self._parse_int(line)
             elif line.startswith('TRANSISTOR'):
                 transistor_info = self._parse_transistor(line)
                 self.data['transistors'].append(transistor_info)
