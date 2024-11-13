@@ -115,6 +115,14 @@ class MatplotlibPlot(BasePlot):
             'pin_height': 500,
             # RGBA color of pins.
             'pin_fill_rgb': (0, 0, 0),
+            # RGB color of sdc fill.
+            'sdc_fill_rgb': (8, 8, 8),
+            # Alpha of sdc fill.
+            'sdc_alpha': 0.4,
+            # RGBA color of sdc stroke.
+            'sdc_edge_rgb': (0, 0, 0),
+            # Line width of sdc.
+            'sdc_linewidth': 5,
             # Width of transistors (unused, use `site_width` instead).
             # 'transistor_width': 1728,
             # Height of transistors (unused, use `row_height / 2` instead).
@@ -259,7 +267,8 @@ class MatplotlibPlot(BasePlot):
                 pin_x += self.data['transistor_offset']
 
             # Fill.
-            fill_rgb = self.params['pin_fill_rgb']
+            fill_rgb = self._convert_int_to_float_rgb(
+                self.params['pin_fill_rgb'])
 
             # Pin rectangle.
             pin_rect = MatplotlibRect(
@@ -271,6 +280,44 @@ class MatplotlibPlot(BasePlot):
         rectangles = []
         for pin in self.data['pins']:
             rectangles.extend(generate_one_pin_rectangles(pin))
+
+        return rectangles
+
+    def _generate_sdc_rectangles(self) -> List[MatplotlibRect]:
+        """Generates plot rectangles for SDCs.
+
+        Returns:
+            A list of MatplotlibRect objects representing SDCs.
+        """
+        if 'sdcs' not in self.data or not self.data['sdcs']:
+            print('[MatplotlibPlot] Warning: SDCs not found.')
+            return []
+
+        # Fill.
+        fill_rgb = self._convert_int_to_float_rgb(self.params['sdc_fill_rgb'])
+        fill_alpha = self.params['sdc_alpha']
+        # Edge.
+        edge_rgb = self._convert_int_to_float_rgb(self.params['sdc_edge_rgb'])
+        # Line width.
+        linewidth = self.params['sdc_linewidth']
+
+        def generate_one_sdc_rectangles(
+                sdc: Dict[str, Any]) -> List[MatplotlibRect]:
+            # SDC location.
+            sdc_x, sdc_y = sdc['x'],  sdc['y']
+            sdc_w, sdc_h = sdc['width'], sdc['height']
+
+            # SDC rectangle.
+            sdc_rect = MatplotlibRect(
+                x=sdc_x, y=sdc_y, w=sdc_w, h=sdc_h, alpha=fill_alpha,
+                fill=True, fill_rgb=fill_rgb,
+                edge=True, edge_rgb=edge_rgb, linewidth=linewidth)
+
+            return [sdc_rect]
+
+        rectangles = []
+        for sdc in self.data['sdcs']:
+            rectangles.extend(generate_one_sdc_rectangles(sdc))
 
         return rectangles
 
@@ -315,8 +362,12 @@ class MatplotlibPlot(BasePlot):
         transistor_rectangles = self._generate_transistor_rectangles()
 
         # Generate rectangles for pins.
-        # print('[MatplotlibPlot] Generating pin rectangles...')
+        print('[MatplotlibPlot] Generating pin rectangles...')
         pin_rectangles = self._generate_pin_rectangles()
+
+        # Generate rectangles for sdcs.
+        print('[MatplotlibPlot] Generating sdc rectangles...')
+        sdc_rectangles = self._generate_sdc_rectangles()
 
         # Create a plot.
         print('[MatplotlibPlot] Creating plot... (This may take a few seconds)')
@@ -328,6 +379,8 @@ class MatplotlibPlot(BasePlot):
         for obj in transistor_rectangles:
             obj.draw(ax)
         for obj in pin_rectangles:
+            obj.draw(ax)
+        for obj in sdc_rectangles:
             obj.draw(ax)
 
         # Set the plot limits.

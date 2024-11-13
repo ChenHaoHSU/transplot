@@ -124,6 +124,12 @@ class CairoPlot(BasePlot):
             'pin_height': 500,
             # RGBA color of pins.
             'pin_fill_rgba': (0, 0, 0, 1.0),
+            # RGBA color of sdc fill.
+            'sdc_fill_rgba': (8, 8, 8, 0.4),
+            # RGBA color of sdc stroke.
+            'sdc_stroke_rgba': (0, 0, 0, 1),
+            # Line width of sdc.
+            'sdc_linewidth': 5.0,
             # Width of transistors (unused, use `site_width` instead).
             # 'transistor_width': 1728,
             # Height of transistors (unused, use `row_height / 2` instead).
@@ -282,6 +288,43 @@ class CairoPlot(BasePlot):
 
         return rectangles
 
+    def _generate_sdc_rectangles(self) -> List[CairoRect]:
+        """Generates plot rectangles for sdcs.
+
+        Returns:
+            A list of CairoRect objects representing sdcs.
+        """
+        if 'sdcs' not in self.data or not self.data['sdcs']:
+            print('[MatplotlibPlot] Warning: sdcs not found.')
+            return []
+
+        def generate_one_sdc_rectangles(
+                sdc: Dict[str, Any]) -> List[CairoRect]:
+            # Sdc location and size.
+            sdc_x, sdc_y = sdc['x'],  sdc['y']
+            sdc_w, sdc_h = sdc['width'], sdc['height']
+
+            # Fill.
+            fill_rgba = self._convert_int_to_float_rgba(
+                self.params['sdc_fill_rgba'])
+            # Stroke.
+            stroke_rgba = self.params['sdc_stroke_rgba']
+            # Line width.
+            linewidth = self.params['sdc_linewidth']
+
+            sdc_rect = CairoRect(
+                x=sdc_x, y=sdc_y, w=sdc_w, h=sdc_h, fill=True,
+                fill_rgba=fill_rgba, stroke=True, stroke_rgba=stroke_rgba,
+                linewidth=linewidth)
+
+            return [sdc_rect]
+
+        rectangles = []
+        for sdc in self.data['sdcs']:
+            rectangles.extend(generate_one_sdc_rectangles(sdc))
+
+        return rectangles
+
     def _get_die_area(self) -> Tuple[int, int, int, int]:
         """Gets the die area.
 
@@ -319,6 +362,7 @@ class CairoPlot(BasePlot):
         """
         self.params['row_linewidth'] /= scale_factor
         self.params['transistor_linewidth'] /= scale_factor
+        self.params['sdc_linewidth'] /= scale_factor
 
     def plot(self, png_name: str = None) -> None:
         """Plots the data to a pop-up window or save to a png file.
@@ -386,12 +430,18 @@ class CairoPlot(BasePlot):
         print('[CairoPlot] Generating pin rectangles...')
         pin_rectangles = self._generate_pin_rectangles()
 
+        # Generate rectangles for sdcs.
+        print('[CairoPlot] Generating sdc rectangles...')
+        sdc_rectangles = self._generate_sdc_rectangles()
+
         # Draw the objects.
         for obj in row_rectangles:
             obj.draw(context)
         for obj in transistor_rectangles:
             obj.draw(context)
         for obj in pin_rectangles:
+            obj.draw(context)
+        for obj in sdc_rectangles:
             obj.draw(context)
 
         # Make sure the png_name is not None.

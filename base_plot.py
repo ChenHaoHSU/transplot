@@ -112,6 +112,20 @@ class BasePlot:
         """
         return tuple(map(lambda x: x / 255., rgb))
 
+    def _convert_int_to_float_rgba(
+            self, rgba: Tuple[int, int, int, float]
+    ) -> Tuple[float, float, float, float]:
+        """Converts an integer RGBA tuple to a float RGBA tuple.
+
+        Args:
+            rgb: An integer RGBA tuple.
+
+        Returns:
+            A float RGBA tuple.
+        """
+        rgb, a = rgba[:3], rgba[3]
+        return tuple(map(lambda x: x / 255., rgb)) + (a,)
+
     def _generate_colors(self) -> None:
         """Generates colors for the transistors.
 

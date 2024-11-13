@@ -173,6 +173,7 @@ class ReaderV2:
             'num_sites': None,
             'transistors': [],
             'pins': [],
+            'sdcs': [],
             'sdc_group': {},
             'transistor_offset': None,
         }
@@ -235,6 +236,9 @@ class ReaderV2:
             elif line.startswith('PIN'):
                 pin_info = self._parse_pin(line)
                 self.data['pins'].append(pin_info)
+            elif line.startswith('SDC'):
+                sdc_info = self._parse_sdc(line)
+                self.data['sdcs'].append(sdc_info)
             else:
                 raise ValueError(f'Unknown line: \'{line}\'.')
         except ValueError as ve:
@@ -296,6 +300,23 @@ class ReaderV2:
             'x': int(tokens[2]),
             'y': int(tokens[3]),
             'net_name': tokens[4],
+        }
+
+        return p
+
+    def _parse_sdc(self, line: str) -> Dict[str, Union[int, str]]:
+        """Parses an SDC line."""
+        tokens = line.split()
+        if len(tokens) != 7:
+            raise IndexError(
+                f'Expect 7 fields but found {len(tokens)} fields.')
+        p = {
+            'name': tokens[1],
+            'macro': tokens[2],
+            'x': int(tokens[3]),
+            'y': int(tokens[4]),
+            'width': int(tokens[5]),
+            'height': int(tokens[6]),
         }
 
         return p
