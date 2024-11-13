@@ -145,7 +145,7 @@ class BasePlot:
 
         # Sort the SDC groups to ensure that the color assignment is consistent.
         keys = [k for k, v in self.data['sdc_group'].items() if v > 2]
-        sorted_keys = sorted(keys, key=int)
+        sorted_keys = sorted(keys, key=str)
 
         # Assign colors to SDC groups.
         self.color_map = {}
