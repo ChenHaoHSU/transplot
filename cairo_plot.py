@@ -227,7 +227,7 @@ class CairoPlot(BasePlot):
         def generate_one_transistor_rectangles(
                 transistor: Dict[str, Any]) -> List[CairoRect]:
             # Transistor location.
-            tran_x, tran_y = transistor['x'] - half_site_width, transistor['y']
+            tran_x, tran_y = transistor['x'] + half_site_width, transistor['y']
             if self.data['transistor_offset']:
                 tran_x += self.data['transistor_offset']
 
