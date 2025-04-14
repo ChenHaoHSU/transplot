@@ -118,10 +118,8 @@ class CairoPlot(BasePlot):
             'plot_margin_x': 2000,
             # Plot margin y.
             'plot_margin_y': 2000,
-            # Pin width.
-            'pin_width': 500,
-            # Pin height.
-            'pin_height': 500,
+            # Pin size ratio w.r.t. row height.
+            'pin_size_ratio': 0.1,
             # RGBA color of pins.
             'pin_fill_rgba': (0, 0, 0, 1.0),
             # RGBA color of sdc fill.
@@ -265,7 +263,8 @@ class CairoPlot(BasePlot):
             return []
 
         # Pin size.
-        pin_w, pin_h = self.params['pin_width'], self.params['pin_height']
+        pin_w = self.params['pin_size_ratio'] * self.data['row_height']
+        pin_h = self.params['pin_size_ratio'] * self.data['row_height']
         pin_hw, pin_hh = pin_w / 2, pin_h / 2
 
         def generate_one_pin_rectangles(
