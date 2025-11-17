@@ -1,6 +1,7 @@
 """Reader of the transplot file with syntax version1 or version2."""
 
 import copy
+import re
 from typing import Any, Dict, Tuple, Union
 
 
@@ -176,6 +177,7 @@ class ReaderV2:
             'sdcs': [],
             'sdc_group': {},
             'transistor_offset': None,
+            'paths': [],
         }
 
     def get_data(self) -> Dict[str, Any]:
@@ -239,6 +241,9 @@ class ReaderV2:
             elif line.startswith('SDC'):
                 sdc_info = self._parse_sdc(line)
                 self.data['sdcs'].append(sdc_info)
+            elif line.startswith('PATH'):
+                path_info = self._parse_path(line)
+                self.data['paths'].append(path_info)
             else:
                 raise ValueError(f'Unknown line: \'{line}\'.')
         except ValueError as ve:
@@ -318,5 +323,13 @@ class ReaderV2:
             'width': int(tokens[5]),
             'height': int(tokens[6]),
         }
+
+        return p
+
+    def _parse_path(self, line: str) -> Dict[str, Any]:
+        """Parses a PATH line."""
+        pairs = re.findall(r'\(\s*(\d+)\s+(\d+)\s*\)', line)
+
+        p = [(int(x), int(y)) for x, y in pairs]
 
         return p

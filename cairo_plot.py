@@ -7,6 +7,7 @@ the Cairo graphics library.
 from typing import Any, List, Dict, Tuple
 import cairo
 from base_plot import BasePlot
+import re
 
 
 class CairoRect:
@@ -75,6 +76,31 @@ class CairoRect:
             context.stroke()
 
 
+class CairoPath:
+    """A class to represent a plot object (line) using Cairo."""
+
+    def __init__(
+            self, points: List[Tuple[int, int]],
+            stroke_rgba: Tuple[float, float, float, float],
+            linewidth: float):
+        self.points = points
+        self.stroke_rgba = stroke_rgba
+        self.linewidth = linewidth
+
+    def draw(self, context: cairo.Context) -> None:
+        """Draws the path on the given Cairo context.
+
+        Args:
+            context: A Cairo context to draw the path on.
+        """
+        context.set_source_rgba(*self.stroke_rgba)
+        context.set_line_width(self.linewidth)
+        context.move_to(*self.points[0])
+        for point in self.points[1:]:
+            context.line_to(*point)
+        context.stroke()
+
+
 class CairoPlot(BasePlot):
     """A class to visualize transistor placement using Cairo.
 
@@ -105,7 +131,7 @@ class CairoPlot(BasePlot):
             # Alpha of transistor edges.
             'transistor_stroke_alpha': 1.0,
             # Width of transistor edges.
-            'transistor_linewidth': 1.0,
+            'transistor_linewidth': 0.5,
             # Fill alpha of transistors.
             'transistor_alpha': {'NMOS': 0.5, 'PMOS': 0.9},
             # Fill alpha of inverters.
@@ -327,6 +353,26 @@ class CairoPlot(BasePlot):
 
         return rectangles
 
+    def _generate_path_lines(self) -> List[CairoPath]:
+        """Generates plot lines for paths.
+
+        Returns:
+            A list of CairoPath objects representing paths.
+        """
+        if 'paths' not in self.data or not self.data['paths']:
+            print('[MatplotlibPlot] Warning: paths not found.')
+            return []
+
+        paths = []
+        for path in self.data['paths']:
+            path_line = CairoPath(
+                points=path,
+                stroke_rgba=(0.0, 0.0, 0.0, 1.0),  # Black color for paths.
+                linewidth=64.0)
+            paths.append(path_line)
+
+        return paths
+
     def _get_die_area(self) -> Tuple[int, int, int, int]:
         """Gets the die area.
 
@@ -436,6 +482,10 @@ class CairoPlot(BasePlot):
         print('[CairoPlot] Generating sdc rectangles...')
         sdc_rectangles = self._generate_sdc_rectangles()
 
+        # Generate lines for paths.
+        print('[CairoPlot] Generating path lines...')
+        path_lines = self._generate_path_lines()
+
         # Draw the objects.
         for obj in row_rectangles:
             obj.draw(context)
@@ -444,6 +494,8 @@ class CairoPlot(BasePlot):
         for obj in pin_rectangles:
             obj.draw(context)
         for obj in sdc_rectangles:
+            obj.draw(context)
+        for obj in path_lines:
             obj.draw(context)
 
         # Make sure the png_name is not None.
