@@ -124,6 +124,8 @@ class CairoPlot(BasePlot):
             'row_stroke_rgba': (0, 0, 0, 1),
             # Width of row edges.
             'row_linewidth': 1.0,
+            # RGBA color of ports.
+            'port_fill_rgba': (255, 0, 0, 0.5),
             # Gray color fill.
             'transistor_fill_rgb_gray': (8, 8, 8),
             # RGB color of transistor edges.
@@ -191,6 +193,35 @@ class CairoPlot(BasePlot):
         rectangles = []
         for i in range(self.data['num_rows']):
             rectangles.append(generate_one_row_rectangle(i))
+
+        return rectangles
+
+    def _generate_port_rectangles(self) -> List[CairoRect]:
+        """Generates plot rectangles for ports.
+
+        Returns:
+            A list of CairoRect objects representing ports.
+        """
+
+        def generate_one_port_rectangles(
+                port: Dict[str, Any]) -> List[CairoRect]:
+            # Port location.
+            port_x, port_y = port['x'],  port['y']
+            port_w, port_h = port['width'], port['height']
+
+            # Fill.
+            fill_rgba = self.params['port_fill_rgba']
+
+            # Port rectangle.
+            port_rect = CairoRect(
+                x=port_x, y=port_y,
+                w=port_w, h=port_h, fill=True, fill_rgba=fill_rgba)
+
+            return [port_rect]
+
+        rectangles = []
+        for port in self.data['ports']:
+            rectangles.extend(generate_one_port_rectangles(port))
 
         return rectangles
 
@@ -470,6 +501,10 @@ class CairoPlot(BasePlot):
         print('[CairoPlot] Generating row rectangles...')
         row_rectangles = self._generate_row_rectangles()
 
+        # Generate rectangles for ports.
+        print('[CairoPlot] Generating port rectangles...')
+        port_rectangles = self._generate_port_rectangles()
+
         # Generate rectangles for transistors.
         print('[CairoPlot] Generating transistor rectangles...')
         transistor_rectangles = self._generate_transistor_rectangles()
@@ -488,6 +523,8 @@ class CairoPlot(BasePlot):
 
         # Draw the objects.
         for obj in row_rectangles:
+            obj.draw(context)
+        for obj in port_rectangles:
             obj.draw(context)
         for obj in transistor_rectangles:
             obj.draw(context)

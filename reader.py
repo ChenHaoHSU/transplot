@@ -172,6 +172,7 @@ class ReaderV2:
             'site_width': None,
             'num_rows': None,
             'num_sites': None,
+            'ports': [],
             'transistors': [],
             'pins': [],
             'sdcs': [],
@@ -230,6 +231,9 @@ class ReaderV2:
                 self.data['num_rows'] = self._parse_int(line)
             elif line.startswith('SITES'):
                 self.data['num_sites'] = self._parse_int(line)
+            elif line.startswith('PORT'):
+                port_info = self._parse_port(line)
+                self.data['ports'].append(port_info)
             elif line.startswith('TRANSISTOROFFSET'):
                 self.data['transistor_offset'] = self._parse_int(line)
             elif line.startswith('TRANSISTOR'):
@@ -270,6 +274,23 @@ class ReaderV2:
                 'DIEAREA should have exactly 4 values, '
                 f'but found: {len(tokens)}')
         return tokens
+
+    def _parse_port(self, line: str) -> Dict[str, Union[int, str]]:
+        """Parses a PORT line."""
+        tokens = line.split()
+        if len(tokens) != 7:
+            raise IndexError(
+                f'Expect 7 fields but found {len(tokens)} fields.')
+        t = {
+            'name': tokens[1],
+            'net_name': tokens[2],
+            'x': int(tokens[3]),
+            'y': int(tokens[4]),
+            'width': int(tokens[5]),
+            'height': int(tokens[6]),
+        }
+
+        return t
 
     def _parse_transistor(self, line: str) -> Dict[str, Union[int, str]]:
         """Parses a TRANSISTOR line."""

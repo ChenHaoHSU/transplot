@@ -91,6 +91,10 @@ class MatplotlibPlot(BasePlot):
             'row_edge_rgb': (0, 0, 0),
             # Width of row edges.
             'row_linewidth': 0.5,
+            # Fill alpha of ports.
+            'port_alpha': 0.5,
+            # RGB color of ports.
+            'port_fill_rgb': (255, 0, 0),
             # Gray color fill.
             'transistor_fill_rgb_gray': (8, 8, 8),
             # RGB color of transistor edges.
@@ -109,10 +113,8 @@ class MatplotlibPlot(BasePlot):
             'plot_margin_x': 2000,
             # Plot margin y.
             'plot_margin_y': 2000,
-            # Pin width.
-            'pin_width': 500,
-            # Pin height.
-            'pin_height': 500,
+            # Pin size ratio w.r.t. row height.
+            'pin_size_ratio': 0.1,
             # RGBA color of pins.
             'pin_fill_rgb': (0, 0, 0),
             # RGB color of sdc fill.
@@ -161,6 +163,37 @@ class MatplotlibPlot(BasePlot):
         for i in range(self.data['num_rows']):
             # i is the row index, and it determines the y-coordinate of the row.
             rectangles.append(generate_one_row_rectangle(i))
+
+        return rectangles
+
+    def _generate_port_rectangles(self) -> List[MatplotlibRect]:
+        """Generates plot rectangles for ports.
+
+        Returns:
+            A list of MatplotlibRect objects representing ports.
+        """
+
+        def generate_one_port_rectangles(
+                port: Dict[str, Any]) -> List[MatplotlibRect]:
+            # Port location.
+            port_x, port_y = port['x'],  port['y']
+            port_w, port_h = port['width'], port['height']
+
+            # Fill.
+            fill_alpha = self.params['port_alpha']
+            fill_rgb = self._convert_int_to_float_rgb(
+                self.params['port_fill_rgb'])
+
+            # Port rectangle.
+            port_rect = MatplotlibRect(
+                x=port_x, y=port_y, w=port_w, h=port_h, alpha=fill_alpha,
+                fill=True, fill_rgb=fill_rgb)
+
+            return [port_rect]
+
+        rectangles = []
+        for port in self.data['ports']:
+            rectangles.extend(generate_one_port_rectangles(port))
 
         return rectangles
 
@@ -220,7 +253,7 @@ class MatplotlibPlot(BasePlot):
         def generate_one_transistor_rectangles(
                 transistor: Dict[str, Any]) -> List[MatplotlibRect]:
             # Transistor location.
-            tran_x, tran_y = transistor['x'] - half_site_width, transistor['y']
+            tran_x, tran_y = transistor['x'] + half_site_width, transistor['y']
             if self.data['transistor_offset']:
                 tran_x += self.data['transistor_offset']
 
@@ -259,7 +292,8 @@ class MatplotlibPlot(BasePlot):
             return []
 
         # Pin size.
-        pin_w, pin_h = self.params['pin_width'], self.params['pin_height']
+        pin_w = self.params['pin_size_ratio'] * self.data['row_height']
+        pin_h = self.params['pin_size_ratio'] * self.data['row_height']
         pin_hw, pin_hh = pin_w / 2, pin_h / 2
 
         def generate_one_pin_rectangles(
@@ -360,6 +394,10 @@ class MatplotlibPlot(BasePlot):
         print('[MatplotlibPlot] Generating row rectangles...')
         row_rectangles = self._generate_row_rectangles()
 
+        # Generate rectangles for ports.
+        print('[MatplotlibPlot] Generating port rectangles...')
+        port_rectangles = self._generate_port_rectangles()
+
         # Generate rectangles for transistors.
         print('[MatplotlibPlot] Generating transistor rectangles...')
         transistor_rectangles = self._generate_transistor_rectangles()
@@ -378,6 +416,8 @@ class MatplotlibPlot(BasePlot):
 
         # Draw the objects.
         for obj in row_rectangles:
+            obj.draw(ax)
+        for obj in port_rectangles:
             obj.draw(ax)
         for obj in transistor_rectangles:
             obj.draw(ax)
