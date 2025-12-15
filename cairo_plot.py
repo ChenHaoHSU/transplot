@@ -156,6 +156,10 @@ class CairoPlot(BasePlot):
             'sdc_stroke_rgba': (0, 0, 0, 1),
             # Line width of sdc.
             'sdc_linewidth': 5.0,
+            # RGBA color of paths.
+            'path_stroke_rgba': (0.0, 0.0, 0.0, 1.0),
+            # Line width of paths.
+            'path_linewidth': 8.0,
             # Width of transistors (unused, use `site_width` instead).
             # 'transistor_width': 1728,
             # Height of transistors (unused, use `row_height / 2` instead).
@@ -398,8 +402,8 @@ class CairoPlot(BasePlot):
         for path in self.data['paths']:
             path_line = CairoPath(
                 points=path,
-                stroke_rgba=(0.0, 0.0, 0.0, 1.0),  # Black color for paths.
-                linewidth=64.0)
+                stroke_rgba=self.params['path_stroke_rgba'],
+                linewidth=self.params['path_linewidth'])
             paths.append(path_line)
 
         return paths
