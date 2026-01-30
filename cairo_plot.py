@@ -236,13 +236,13 @@ class CairoPlot(BasePlot):
             A list of CairoRect objects representing transistors.
         """
         if 'transistors' not in self.data or not self.data['transistors']:
-            print('[MatplotlibPlot] Warning: transistors not found.')
+            print('[CairoPlot] Warning: transistors not found.')
             return []
         if 'site_width' not in self.data or not self.data['site_width']:
-            print('[MatplotlibPlot] Warning: site width not found.')
+            print('[CairoPlot] Warning: site width not found.')
             return []
         if 'row_height' not in self.data or not self.data['row_height']:
-            print('[MatplotlibPlot] Warning: row height not found.')
+            print('[CairoPlot] Warning: row height not found.')
             return []
 
         # Half site width.
@@ -320,7 +320,7 @@ class CairoPlot(BasePlot):
             A list of CairoRect objects representing pins.
         """
         if 'pins' not in self.data or not self.data['pins']:
-            print('[MatplotlibPlot] Warning: pins not found.')
+            print('[CairoPlot] Warning: pins not found.')
             return []
 
         # Pin size.
@@ -358,7 +358,7 @@ class CairoPlot(BasePlot):
             A list of CairoRect objects representing sdcs.
         """
         if 'sdcs' not in self.data or not self.data['sdcs']:
-            print('[MatplotlibPlot] Warning: sdcs not found.')
+            print('[CairoPlot] Warning: sdcs not found.')
             return []
 
         def generate_one_sdc_rectangles(
@@ -395,7 +395,7 @@ class CairoPlot(BasePlot):
             A list of CairoPath objects representing paths.
         """
         if 'paths' not in self.data or not self.data['paths']:
-            print('[MatplotlibPlot] Warning: paths not found.')
+            print('[CairoPlot] Warning: paths not found.')
             return []
 
         paths = []
