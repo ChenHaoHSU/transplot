@@ -72,41 +72,44 @@ class BasePlot:
             raise FileNotFoundError(
                 f'[BasePlot] Error: The file "{path}" was not found.')
 
-        # Try to read the file with syntax version1.
-        print(f'[BasePlot] Reading file "{path} with syntax version1...')
+        # Try to read the file with Version1 format.
+        # print(f'[BasePlot] Reading file "{path}" with the Version1 format...')
         reader_v1 = ReaderV1()
         if reader_v1.read(path):
-            print(f'[BasePlot] Successfully read the file "{path}" with '
-                  'syntax version1.')
+            print(f'[BasePlot] Successfully read the file "{path}" with the '
+                  'Version1 format.')
             self.data = reader_v1.get_data()
             self._build_color_map()
             return True
-        print(f'[BasePlot] Error: Failed to read the file "{path}" with '
-              'syntax version1.')
+        print(f'[BasePlot] Failed to read the file "{path}" with the '
+              'Version1 format.')
 
-        # Try to read the file with syntax version2.
-        print(f'[BasePlot] Reading file "{path} with syntax version2...')
+        # Try to read the file with Version2 format.
+        # print(f'[BasePlot] Reading file "{path}" with the Version2 format...')
         reader_v2 = ReaderV2()
         if reader_v2.read(path):
-            print(f'[BasePlot] Successfully read the file "{path}" with '
-                  'syntax version2.')
+            print(f'[BasePlot] Successfully read the file "{path}" with the '
+                  'Version2 format.')
             self.data = reader_v2.get_data()
             self._build_color_map()
             return True
-        print(f'[BasePlot] Error: Failed to read the file "{path}" with '
-              'syntax version2.')
+        print(f'[BasePlot] Failed to read the file "{path}" with the '
+              'Version2 format.')
 
-        # Try to read the file with json format.
-        print(f'[BasePlot] Reading file "{path} with json format...')
+        # Try to read the file with JSON format.
+        # print(f'[BasePlot] Reading file "{path}" with the JSON format...')
         reader_json = ReaderJson()
         if reader_json.read(path):
-            print(f'[BasePlot] Successfully read the file "{path}" with '
-                  'json format.')
+            print(f'[BasePlot] Successfully read the file "{path}" with the '
+                  'JSON format.')
             self.data = reader_json.get_data()
             self._build_color_map()
             return True
-        print(f'[BasePlot] Error: Failed to read the file "{path}" with '
-              'json format.')
+        print(f'[BasePlot] Failed to read the file "{path}" with '
+              'the JSON format.')
+
+        print(f'[BasePlot] Failed to read the file "{path}" '
+              'with all supported formats. Please check the file format.')
 
         return False
 
