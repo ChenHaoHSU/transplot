@@ -29,10 +29,13 @@ class ReaderV1:
         }
 
         # Parsing transistor flag.
-        self.parsing_transistors_flag: bool = False
+        self._parsing_transistors_flag: bool = False
 
         # Number of transistors.
-        self.num_transistors: int = 0
+        self._num_transistors: int = 0
+
+        # Verbose flag.
+        self._verbose: bool = False
 
     def get_data(self) -> Dict[str, Any]:
         """Gets the data read from the file.
@@ -57,28 +60,30 @@ class ReaderV1:
             IndexError: If there is an index error when parsing the file.
         """
         # Reset flags.
-        self.parsing_transistors_flag = False
-        self.num_transistors = 0
+        self._parsing_transistors_flag = False
+        self._num_transistors = 0
 
         try:
             with open(path, 'r', encoding='utf-8') as file:
                 for line in file.read().splitlines():
                     self._parse_line(line)
         except FileNotFoundError:
-            print(f'[ReaderV1] Error: The file "{path}" was not found.')
+            if self._verbose:
+                print(f'[ReaderV1] Error: The file "{path}" was not found.')
             return False
         except (ValueError, IndexError) as e:
-            print(f'[ReaderV1] Error: {e}')
+            if self._verbose:
+                print(f'[ReaderV1] Error: {e}')
             return False
 
         return True
 
     def _parse_line(self, line: str) -> None:
         """Parses a line from the file."""
-        if self.parsing_transistors_flag:
-            if len(self.data['transistors']) >= self.num_transistors:
+        if self._parsing_transistors_flag:
+            if len(self.data['transistors']) >= self._num_transistors:
                 if line.startswith('END TRANSISTORS'):
-                    self.parsing_transistors_flag = False
+                    self._parsing_transistors_flag = False
                     return  # End parsing transistors.
                 raise ValueError(
                     '[ReaderV1] Expect \'END TRANSISTORS\' but not found. '
@@ -103,8 +108,8 @@ class ReaderV1:
             elif line.startswith('TRANSISTOROFFSET'):
                 self.data['transistor_offset'] = self._parse_int(line)
             elif line.startswith('TRANSISTORS'):
-                self.parsing_transistors_flag = True
-                self.num_transistors = self._parse_int(line)
+                self._parsing_transistors_flag = True
+                self._num_transistors = self._parse_int(line)
             else:
                 raise ValueError(f'Unknown line: \'{line}\'.')
         except ValueError as ve:
@@ -182,6 +187,8 @@ class ReaderV2:
             'paths': [],
         }
 
+        self._verbose: bool = False
+
     def get_data(self) -> Dict[str, Any]:
         """Gets the data read from the file.
 
@@ -209,10 +216,12 @@ class ReaderV2:
                 for line in file.read().splitlines():
                     self._parse_line(line)
         except FileNotFoundError:
-            print(f'[ReaderV2] Error: The file "{path}" was not found.')
+            if self._verbose:
+                print(f'[ReaderV2] Error: The file "{path}" was not found.')
             return False
         except (ValueError, IndexError) as e:
-            print(f'[ReaderV2] Error: {e}')
+            if self._verbose:
+                print(f'[ReaderV2] Error: {e}')
             return False
 
         return True
@@ -383,6 +392,8 @@ class ReaderJson:
             'paths': [],
         }
 
+        self._verbose: bool = False
+
     def get_data(self) -> Dict[str, Any]:
         """Gets the data read from the file.
 
@@ -419,60 +430,62 @@ class ReaderJson:
                 self.data['sdcs'] = self._get_sdcs(json_data)
                 self.data['paths'] = self._get_paths(json_data)
         except FileNotFoundError:
-            print(f'[ReaderJson] Error: The file "{path}" was not found.')
+            if self._verbose:
+                print(f'[ReaderJson] Error: The file "{path}" was not found.')
             return False
         except (ValueError, IndexError) as e:
-            print(f'[ReaderJson] Error: {e}')
+            if self._verbose:
+                print(f'[ReaderJson] Error: {e}')
             return False
 
         return True
 
     def _get_die_area(self, json_data: Dict[str, Any]) -> Tuple[int]:
-        """Gets the die area from the json data."""
+        """Gets the die area from the JSON data."""
         die_area_json = json_data.get('canvas', {}).get('die_area', None)
         if die_area_json is None:
-            raise ValueError('[ReaderJson] Die area not found in json data.')
+            raise ValueError('[ReaderJson] Die area not found in JSON data.')
         xl = die_area_json.get('xl', None)
         yl = die_area_json.get('yl', None)
         xh = die_area_json.get('xh', None)
         yh = die_area_json.get('yh', None)
         if None in (xl, yl, xh, yh):
             raise ValueError(
-                '[ReaderJson] Die area is incomplete in json data.')
+                '[ReaderJson] Die area is incomplete in JSON data.')
         return (xl, yl, xh, yh)
 
     def _get_row_height(self, json_data: Dict[str, Any]) -> int:
-        """Gets the row height from the json data."""
+        """Gets the row height from the JSON data."""
         row_height = json_data.get('canvas', {}).get('row_height', None)
         if row_height is None:
-            raise ValueError('[ReaderJson] Row height not found in json data.')
+            raise ValueError('[ReaderJson] Row height not found in JSON data.')
         return row_height
 
     def _get_site_width(self, json_data: Dict[str, Any]) -> int:
-        """Gets the site width from the json data."""
+        """Gets the site width from the JSON data."""
         site_width = json_data.get('canvas', {}).get('site_width', None)
         if site_width is None:
-            raise ValueError('[ReaderJson] Site width not found in json data.')
+            raise ValueError('[ReaderJson] Site width not found in JSON data.')
         return site_width
 
     def _get_num_rows(self, json_data: Dict[str, Any]) -> int:
-        """Gets the number of rows from the json data."""
+        """Gets the number of rows from the JSON data."""
         num_rows = json_data.get('canvas', {}).get('rows', None)
         if num_rows is None:
             raise ValueError(
-                '[ReaderJson] Number of rows not found in json data.')
+                '[ReaderJson] Number of rows not found in JSON data.')
         return num_rows
 
     def _get_num_sites(self, json_data: Dict[str, Any]) -> int:
-        """Gets the number of sites from the json data."""
+        """Gets the number of sites from the JSON data."""
         num_sites = json_data.get('canvas', {}).get('sites', None)
         if num_sites is None:
             raise ValueError(
-                '[ReaderJson] Number of sites not found in json data.')
+                '[ReaderJson] Number of sites not found in JSON data.')
         return num_sites
 
     def _get_ports(self, json_data: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """Gets the ports from the json data."""
+        """Gets the ports from the JSON data."""
         ports_json = json_data.get('ports', [])
         ports = []
         for port_json in ports_json:
@@ -488,7 +501,7 @@ class ReaderJson:
         return ports
 
     def _get_transistors(self, json_data: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """Gets the transistors from the json data."""
+        """Gets the transistors from the JSON data."""
         transistors_json = json_data.get('transistors', [])
         transistors = []
         sdc_group = {}
@@ -514,7 +527,7 @@ class ReaderJson:
         return transistors
 
     def _get_pins(self, json_data: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """Gets the pins from the json data."""
+        """Gets the pins from the JSON data."""
         pins_json = json_data.get('pins', [])
         pins = []
         for pin_json in pins_json:
@@ -528,7 +541,7 @@ class ReaderJson:
         return pins
 
     def _get_sdcs(self, json_data: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """Gets the sdcs from the json data."""
+        """Gets the sdcs from the JSON data."""
         sdcs_json = json_data.get('sdcs', [])
         sdcs = []
         for sdc_json in sdcs_json:
@@ -544,7 +557,7 @@ class ReaderJson:
         return sdcs
 
     def _get_paths(self, json_data: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """Gets the paths from the json data."""
+        """Gets the paths from the JSON data."""
         paths_json = json_data.get('paths', [])
         paths = []
         for path_json in paths_json:
