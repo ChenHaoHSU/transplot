@@ -493,11 +493,13 @@ class ReaderJson:
             port = {
                 'name': port_json.get('name', ''),
                 'net_name': port_json.get('net_name', ''),
-                'x': port_json.get('x', 0),
-                'y': port_json.get('y', 0),
-                'width': port_json.get('width', 0),
-                'height': port_json.get('height', 0),
+                'x': port_json.get('x', None),
+                'y': port_json.get('y', None),
+                'width': port_json.get('width', None),
+                'height': port_json.get('height', None),
             }
+            if None in (port['x'], port['y'], port['width'], port['height']):
+                continue  # Skip invalid ports.
             ports.append(port)
         return ports
 
@@ -507,18 +509,21 @@ class ReaderJson:
         transistors = []
         sdc_group = {}
         for transistor_json in transistors_json:
-            t = {
+            tran = {
                 'name': transistor_json.get('name', ''),
-                'x': transistor_json.get('x', 0),
-                'y': transistor_json.get('y', 0),
+                'x': transistor_json.get('x', None),
+                'y': transistor_json.get('y', None),
                 'flipped': transistor_json.get('flipped', 0),
-                'type': transistor_json.get('type', ''),
+                'type': transistor_json.get('type', None),
                 'sdc': transistor_json.get('sdc', ''),
             }
 
+            if None in (tran['x'], tran['y'], tran['type']):
+                continue  # Skip invalid transistors.
+
             # Update SDC group count.
-            transistors.append(t)
-            sdc = t['sdc']
+            transistors.append(tran)
+            sdc = tran['sdc']
             if sdc not in sdc_group:
                 sdc_group[sdc] = 1
             else:
@@ -535,9 +540,11 @@ class ReaderJson:
             pin = {
                 'name': pin_json.get('name', ''),
                 'net_name': pin_json.get('net_name', ''),
-                'x': pin_json.get('x', 0),
-                'y': pin_json.get('y', 0),
+                'x': pin_json.get('x', None),
+                'y': pin_json.get('y', None),
             }
+            if None in (pin['x'], pin['y']):
+                continue  # Skip invalid pins.
             pins.append(pin)
         return pins
 
@@ -549,11 +556,13 @@ class ReaderJson:
             sdc = {
                 'name': sdc_json.get('name', ''),
                 'macro': sdc_json.get('macro', ''),
-                'x': sdc_json.get('x', 0),
-                'y': sdc_json.get('y', 0),
-                'width': sdc_json.get('width', 0),
-                'height': sdc_json.get('height', 0),
+                'x': sdc_json.get('x', None),
+                'y': sdc_json.get('y', None),
+                'width': sdc_json.get('width', None),
+                'height': sdc_json.get('height', None),
             }
+            if None in (sdc['x'], sdc['y'], sdc['width'], sdc['height']):
+                continue  # Skip invalid sdcs.
             sdcs.append(sdc)
         return sdcs
 
@@ -567,10 +576,12 @@ class ReaderJson:
             for edge_json in edges_json:
                 from_node = edge_json.get('from_node', {})
                 to_node = edge_json.get('to_node', {})
-                x1 = from_node.get('x', 0)
-                y1 = from_node.get('y', 0)
-                x2 = to_node.get('x', 0)
-                y2 = to_node.get('y', 0)
+                x1 = from_node.get('x', None)
+                y1 = from_node.get('y', None)
+                x2 = to_node.get('x', None)
+                y2 = to_node.get('y', None)
+                if None in (x1, y1, x2, y2):
+                    continue  # Skip invalid edges.
                 edges.append(((x1, y1), (x2, y2)))
             paths.append(edges)
         return paths
