@@ -1,8 +1,9 @@
 """Reader of the transplot file with syntax version1 or version2."""
 
 import copy
+import json
 import re
-from typing import Any, Dict, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union
 
 
 class ReaderV1:
@@ -354,3 +355,203 @@ class ReaderV2:
         p = [(int(x), int(y)) for x, y in pairs]
 
         return p
+
+
+class ReaderJson:
+    """Reader of the transplot file with syntax version2.
+
+    This is a reader for the transplot file with syntax version2. The reader
+    reads the file and stores the data in a dictionary. The data can be accessed
+    using the get_data method.
+    """
+
+    def __init__(self):
+        """Initializes the reader."""
+        self.data: Dict[str, Any] = {
+            'units': None,
+            'die_area': None,
+            'row_height': None,
+            'site_width': None,
+            'num_rows': None,
+            'num_sites': None,
+            'transistor_offset': None,
+            'ports': [],
+            'transistors': [],
+            'pins': [],
+            'sdcs': [],
+            'sdc_group': {},
+            'paths': [],
+        }
+
+    def get_data(self) -> Dict[str, Any]:
+        """Gets the data read from the file.
+
+        Returns:
+            Return a deep copy of the data to prevent unintended modifications.
+        """
+        return copy.deepcopy(self.data)
+
+    def read(self, path: str) -> bool:
+        """Reads the data from a file.
+
+        Args:
+            path: The file path.
+
+        Returns:
+            True if the file was read successfully, False otherwise.
+
+        Raises:
+            FileNotFoundError: If the file was not found.
+            ValueError: If there is a value error when parsing the file.
+            IndexError: If there is an index error when parsing the file.
+        """
+        try:
+            with open(path, "r") as f:
+                json_data = json.load(f)
+                self.data['die_area'] = self._get_die_area(json_data)
+                self.data['row_height'] = self._get_row_height(json_data)
+                self.data['site_width'] = self._get_site_width(json_data)
+                self.data['num_rows'] = self._get_num_rows(json_data)
+                self.data['num_sites'] = self._get_num_sites(json_data)
+                self.data['ports'] = self._get_ports(json_data)
+                self.data['transistors'] = self._get_transistors(json_data)
+                self.data['pins'] = self._get_pins(json_data)
+                self.data['sdcs'] = self._get_sdcs(json_data)
+                self.data['paths'] = self._get_paths(json_data)
+        except FileNotFoundError:
+            print(f'[ReaderJson] Error: The file "{path}" was not found.')
+            return False
+        except (ValueError, IndexError) as e:
+            print(f'[ReaderJson] Error: {e}')
+            return False
+
+        return True
+
+    def _get_die_area(self, json_data: Dict[str, Any]) -> Tuple[int]:
+        """Gets the die area from the json data."""
+        die_area_json = json_data.get('canvas', {}).get('die_area', None)
+        if die_area_json is None:
+            raise ValueError('[ReaderJson] Die area not found in json data.')
+        xl = die_area_json.get('xl', None)
+        yl = die_area_json.get('yl', None)
+        xh = die_area_json.get('xh', None)
+        yh = die_area_json.get('yh', None)
+        if None in (xl, yl, xh, yh):
+            raise ValueError(
+                '[ReaderJson] Die area is incomplete in json data.')
+        return (xl, yl, xh, yh)
+
+    def _get_row_height(self, json_data: Dict[str, Any]) -> int:
+        """Gets the row height from the json data."""
+        row_height = json_data.get('canvas', {}).get('row_height', None)
+        if row_height is None:
+            raise ValueError('[ReaderJson] Row height not found in json data.')
+        return row_height
+
+    def _get_site_width(self, json_data: Dict[str, Any]) -> int:
+        """Gets the site width from the json data."""
+        site_width = json_data.get('canvas', {}).get('site_width', None)
+        if site_width is None:
+            raise ValueError('[ReaderJson] Site width not found in json data.')
+        return site_width
+
+    def _get_num_rows(self, json_data: Dict[str, Any]) -> int:
+        """Gets the number of rows from the json data."""
+        num_rows = json_data.get('canvas', {}).get('rows', None)
+        if num_rows is None:
+            raise ValueError(
+                '[ReaderJson] Number of rows not found in json data.')
+        return num_rows
+
+    def _get_num_sites(self, json_data: Dict[str, Any]) -> int:
+        """Gets the number of sites from the json data."""
+        num_sites = json_data.get('canvas', {}).get('sites', None)
+        if num_sites is None:
+            raise ValueError(
+                '[ReaderJson] Number of sites not found in json data.')
+        return num_sites
+
+    def _get_ports(self, json_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Gets the ports from the json data."""
+        ports_json = json_data.get('ports', [])
+        ports = []
+        for port_json in ports_json:
+            port = {
+                'name': port_json.get('name', ''),
+                'net_name': port_json.get('net_name', ''),
+                'x': port_json.get('x', 0),
+                'y': port_json.get('y', 0),
+                'width': port_json.get('width', 0),
+                'height': port_json.get('height', 0),
+            }
+            ports.append(port)
+        return ports
+
+    def _get_transistors(self, json_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Gets the transistors from the json data."""
+        transistors_json = json_data.get('transistors', [])
+        transistors = []
+        sdc_group = {}
+        for transistor_json in transistors_json:
+            t = {
+                'name': transistor_json.get('name', ''),
+                'x': transistor_json.get('x', 0),
+                'y': transistor_json.get('y', 0),
+                'flipped': transistor_json.get('flipped', 0),
+                'type': transistor_json.get('type', ''),
+                'sdc': transistor_json.get('sdc', ''),
+            }
+
+            # Update SDC group count.
+            transistors.append(t)
+            sdc = t['sdc']
+            if sdc not in sdc_group:
+                sdc_group[sdc] = 1
+            else:
+                sdc_group[sdc] += 1
+
+        self.data['sdc_group'] = sdc_group
+        return transistors
+
+    def _get_pins(self, json_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Gets the pins from the json data."""
+        pins_json = json_data.get('pins', [])
+        pins = []
+        for pin_json in pins_json:
+            pin = {
+                'name': pin_json.get('name', ''),
+                'net_name': pin_json.get('net_name', ''),
+                'x': pin_json.get('x', 0),
+                'y': pin_json.get('y', 0),
+            }
+            pins.append(pin)
+        return pins
+
+    def _get_sdcs(self, json_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Gets the sdcs from the json data."""
+        sdcs_json = json_data.get('sdcs', [])
+        sdcs = []
+        for sdc_json in sdcs_json:
+            sdc = {
+                'name': sdc_json.get('name', ''),
+                'macro': sdc_json.get('macro', ''),
+                'x': sdc_json.get('x', 0),
+                'y': sdc_json.get('y', 0),
+                'width': sdc_json.get('width', 0),
+                'height': sdc_json.get('height', 0),
+            }
+            sdcs.append(sdc)
+        return sdcs
+
+    def _get_paths(self, json_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Gets the paths from the json data."""
+        paths_json = json_data.get('paths', [])
+        paths = []
+        for path_json in paths_json:
+            path = []
+            for point in path_json:
+                x = point[0]
+                y = point[1]
+                path.append((x, y))
+            paths.append(path)
+        return paths

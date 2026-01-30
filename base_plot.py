@@ -4,7 +4,7 @@ import os
 import random
 from typing import Any, Dict, Tuple, Union, List
 
-from reader import ReaderV1, ReaderV2
+from reader import ReaderV1, ReaderV2, ReaderJson
 
 
 class BasePlot:
@@ -81,7 +81,6 @@ class BasePlot:
             self.data = reader_v1.get_data()
             self._build_color_map()
             return True
-
         print(f'[BasePlot] Error: Failed to read the file "{path}" with '
               'syntax version1.')
 
@@ -94,9 +93,20 @@ class BasePlot:
             self.data = reader_v2.get_data()
             self._build_color_map()
             return True
-
         print(f'[BasePlot] Error: Failed to read the file "{path}" with '
               'syntax version2.')
+
+        # Try to read the file with json format.
+        print(f'[BasePlot] Reading file "{path} with json format...')
+        reader_json = ReaderJson()
+        if reader_json.read(path):
+            print(f'[BasePlot] Successfully read the file "{path}" with '
+                  'json format.')
+            self.data = reader_json.get_data()
+            self._build_color_map()
+            return True
+        print(f'[BasePlot] Error: Failed to read the file "{path}" with '
+              'json format.')
 
         return False
 
