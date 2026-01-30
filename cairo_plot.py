@@ -80,10 +80,10 @@ class CairoPath:
     """A class to represent a plot object (line) using Cairo."""
 
     def __init__(
-            self, points: List[Tuple[int, int]],
+            self, edges: List[Tuple[Tuple[int, int], Tuple[int, int]]],
             stroke_rgba: Tuple[float, float, float, float],
             linewidth: float):
-        self.points = points
+        self.edges = edges
         self.stroke_rgba = stroke_rgba
         self.linewidth = linewidth
 
@@ -95,9 +95,9 @@ class CairoPath:
         """
         context.set_source_rgba(*self.stroke_rgba)
         context.set_line_width(self.linewidth)
-        context.move_to(*self.points[0])
-        for point in self.points[1:]:
-            context.line_to(*point)
+        for (x1, y1), (x2, y2) in self.edges:
+            context.move_to(x1, y1)
+            context.line_to(x2, y2)
         context.stroke()
 
 
@@ -401,7 +401,7 @@ class CairoPlot(BasePlot):
         paths = []
         for path in self.data['paths']:
             path_line = CairoPath(
-                points=path,
+                edges=path,
                 stroke_rgba=self.params['path_stroke_rgba'],
                 linewidth=self.params['path_linewidth'])
             paths.append(path_line)

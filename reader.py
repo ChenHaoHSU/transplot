@@ -359,9 +359,12 @@ class ReaderV2:
 
     def _parse_path(self, line: str) -> Dict[str, Any]:
         """Parses a PATH line."""
-        pairs = re.findall(r'\(\s*(\d+)\s+(\d+)\s*\)', line)
+        edges = re.findall(r'\(\s*(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s*\)', line)
 
-        p = [(int(x), int(y)) for x, y in pairs]
+        p = [((int(x1), int(y1)), (int(x2), int(y2)))
+             for x1, y1, x2, y2 in edges]
+
+        print(p)
 
         return p
 
@@ -561,10 +564,15 @@ class ReaderJson:
         paths_json = json_data.get('paths', [])
         paths = []
         for path_json in paths_json:
-            path = []
-            for point in path_json:
-                x = point[0]
-                y = point[1]
-                path.append((x, y))
-            paths.append(path)
+            edges_json = path_json.get('edges', [])
+            edges = []
+            for edge_json in edges_json:
+                from_node = edge_json.get('from_node', {})
+                to_node = edge_json.get('to_node', {})
+                x1 = from_node.get('x', 0)
+                y1 = from_node.get('y', 0)
+                x2 = to_node.get('x', 0)
+                y2 = to_node.get('y', 0)
+                edges.append(((x1, y1), (x2, y2)))
+            paths.append(edges)
         return paths
