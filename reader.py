@@ -364,8 +364,6 @@ class ReaderV2:
         p = [((int(x1), int(y1)), (int(x2), int(y2)))
              for x1, y1, x2, y2 in edges]
 
-        print(p)
-
         return p
 
 
