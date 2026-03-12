@@ -172,6 +172,9 @@ class MatplotlibPlot(BasePlot):
         Returns:
             A list of MatplotlibRect objects representing ports.
         """
+        if 'ports' not in self.data or not self.data['ports']:
+            print('[MatplotlibPlot] Warning: ports not found.')
+            return []
 
         def generate_one_port_rectangles(
                 port: Dict[str, Any]) -> List[MatplotlibRect]:

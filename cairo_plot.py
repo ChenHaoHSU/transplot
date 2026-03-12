@@ -206,6 +206,9 @@ class CairoPlot(BasePlot):
         Returns:
             A list of CairoRect objects representing ports.
         """
+        if 'ports' not in self.data or not self.data['ports']:
+            print('[CairoPlot] Warning: ports not found.')
+            return []
 
         def generate_one_port_rectangles(
                 port: Dict[str, Any]) -> List[CairoRect]:
