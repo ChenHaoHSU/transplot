@@ -30,6 +30,8 @@ def main() -> None:
                         nargs="*", default=None, help='target SDCs')
     parser.add_argument('-t', '--transistor', action='store',
                         nargs="*", default=None, help='target transistors')
+    parser.add_argument('--transistor_offset_x', type=int,
+                        default=None, help='transistor offset in x direction')
     args = parser.parse_args()
 
     # Initialize the plotter.
@@ -62,6 +64,11 @@ def main() -> None:
         # Set the target transistors.
         print(f'[Main] Target transistors: {args.transistor}')
         plotter.set_target_transistors(args.transistor)
+
+    # Set the transistor offset x if provided.
+    if args.transistor_offset_x is not None:
+        plotter.data['transistor_offset'] = args.transistor_offset_x
+        print(f'[Main] Transistor offset x: {args.transistor_offset_x}')
 
     # Plot.
     plotter.plot(args.output)
