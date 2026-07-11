@@ -3,3 +3,8 @@ __pycache__/
 *.pyo
 *.png
 *.log
+
+# Bazel
+/bazel-*
+MODULE.bazel.lock
+.bazelversion

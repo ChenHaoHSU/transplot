@@ -1,0 +1,31 @@
+# Use Bzlmod (`MODULE.bazel`) instead of `WORKSPACE.bazel`.
+common --enable_bzlmod
+common --noenable_workspace
+
+# Use C++17.
+build --cxxopt=-std=c++17
+build --host_cxxopt=-std=c++17
+
+# Use gcc and g++ as the C and C++ compilers.
+build --action_env=CC=gcc
+build --action_env=CXX=g++
+
+# Fully-static build options.
+# On Ubuntu 24.04 (gcc 13 / binutils 2.42 / glibc 2.39), `fully_static_link`
+# alone fails at link time with stapsdt relocations into discarded sections
+# in libc.a's ____longjmp_chk.o under ld.gold + --gc-sections.
+#
+# Option A: fully static via ld.bfd (no stapsdt/gc-sections issue).
+build --features=fully_static_link
+build --linkopt=-fuse-ld=bfd
+build --features=-supports_start_end_lib
+# Force all dependencies (e.g. googletest) to link as static archives so the
+# fully-static link resolves consistently across binaries and tests.
+build --dynamic_mode=off
+#
+# Option B: fully static via ld.gold without section GC.
+# build --features=fully_static_link
+# build --linkopt=-Wl,--no-gc-sections
+#
+# Option C: static for our code + 3rd-party libs, dynamic libc/libstdc++.
+# build --features=mostly_static_link

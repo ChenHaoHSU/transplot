@@ -1,0 +1,35 @@
+"""Bzlmod module definition for the transplot C++ port."""
+
+module(name = "transplot")
+
+#############################
+# Bazel central registry.
+#############################
+bazel_dep(name = "bazel_skylib", version = "1.9.0")
+bazel_dep(name = "rules_cc", version = "0.2.16")
+
+# Google test.
+bazel_dep(name = "googletest", version = "1.17.0.bcr.2", repo_name = "com_google_googletest")
+
+# Abseil.
+bazel_dep(name = "abseil-cpp", version = "20260107.0", repo_name = "com_google_absl")
+
+# JSON (used by the ReaderJson dialect).
+bazel_dep(name = "nlohmann_json", version = "3.12.0.bcr.1")
+
+#############################
+# Cairo (static archives from the conda `transplot` env).
+#############################
+# meson/ninja are not installed, so we link Cairo's prebuilt static archives
+# rather than building from source. See third_party/cairo.BUILD for the wiring
+# and cairo_font_stubs.c for the freetype/fontconfig link shim.
+new_local_repository = use_repo_rule(
+    "@bazel_tools//tools/build_defs/repo:local.bzl",
+    "new_local_repository",
+)
+
+new_local_repository(
+    name = "cairo",
+    build_file = "//third_party:cairo.BUILD",
+    path = "/home/ubuntu/miniconda3/envs/transplot",
+)

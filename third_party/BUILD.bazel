@@ -1,0 +1,3 @@
+# Exports the Cairo repository build file consumed by MODULE.bazel's
+# new_local_repository(build_file = "//third_party:cairo.BUILD").
+exports_files(["cairo.BUILD"])

@@ -1,0 +1,97 @@
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
+
+package(default_visibility = ["//visibility:public"])
+
+cc_library(
+    name = "transplot_db",
+    hdrs = ["transplot_db.h"],
+    deps = [
+        "@com_google_absl//absl/container:btree",
+    ],
+)
+
+cc_library(
+    name = "python_random",
+    srcs = ["python_random.cc"],
+    hdrs = ["python_random.h"],
+)
+
+cc_library(
+    name = "reader",
+    srcs = ["reader.cc"],
+    hdrs = ["reader.h"],
+    deps = [
+        ":transplot_db",
+        "@nlohmann_json//:json",
+    ],
+)
+
+cc_library(
+    name = "base_plot",
+    srcs = ["base_plot.cc"],
+    hdrs = ["base_plot.h"],
+    deps = [
+        ":python_random",
+        ":transplot_db",
+        "@com_google_absl//absl/container:flat_hash_map",
+    ],
+)
+
+cc_library(
+    name = "cairo_plot",
+    srcs = ["cairo_plot.cc"],
+    hdrs = ["cairo_plot.h"],
+    deps = [
+        ":base_plot",
+        ":transplot_db",
+        "@cairo//:cairo",
+    ],
+)
+
+# Link shim resolving the freetype/fontconfig symbols dragged in by libcairo.a's
+# toy-font backend (dead code for text-free rendering). Must be linked with the
+# binary so the fully-static link succeeds without the font static archives.
+cc_library(
+    name = "cairo_font_stubs",
+    srcs = ["cairo_font_stubs.c"],
+    linkstatic = True,
+    alwayslink = True,
+)
+
+cc_binary(
+    name = "transplot_runner",
+    srcs = ["transplot_runner.cc"],
+    deps = [
+        ":cairo_font_stubs",
+        ":cairo_plot",
+        ":reader",
+        ":transplot_db",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/flags:parse",
+        "@com_google_absl//absl/flags:usage",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_test(
+    name = "python_random_test",
+    size = "small",
+    srcs = ["python_random_test.cc"],
+    deps = [
+        ":python_random",
+        "@com_google_googletest//:gtest",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "reader_test",
+    size = "small",
+    srcs = ["reader_test.cc"],
+    deps = [
+        ":reader",
+        ":transplot_db",
+        "@com_google_googletest//:gtest",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
